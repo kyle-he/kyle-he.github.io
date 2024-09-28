@@ -1,5 +1,4 @@
 <script>
-  export const prerender = true; 
 </script>
 
 <main class="container mx-auto max-w-3xl p-4">
