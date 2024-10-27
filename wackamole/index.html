@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hit the Bot!</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .bot {
+            font-size: 3rem;
+            opacity: 0;
+            transform: translateY(50%) scale(0.5);
+            transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+        }
+        .explosion {
+            font-size: 2rem;
+            color: red;
+            position: absolute;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+        }
+        .sparkler {
+            font-size: 2rem;
+            color: gold;
+            position: absolute;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+        }
+        .feedback {
+            position: absolute;
+            top: 10px;
+            opacity: 0;
+            font-weight: bold;
+            transition: opacity 0.2s ease-in-out;
+        }
+        .hit-feedback {
+            color: green;
+        }
+        .dodged-feedback {
+            color: red;
+        }
+        .box {
+            position: relative;
+            width: 100%;
+            padding-top: 100%; /* 1:1 Aspect Ratio */
+        }
+        /* Further Reduced Aspect Ratio for Mobile */
+        @media (max-width: 640px) {
+            .box {
+                padding-top: 50%; /* 2:1 Aspect Ratio */
+            }
+        }
+        .content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        /* Table Styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f3f4f6;
+        }
+        /* Color Coding for Last Shots Table */
+        .hit-row {
+            background-color: #d1fae5; /* Light green */
+        }
+        .dodged-row {
+            background-color: #fee2e2; /* Light red */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-start space-y-8 p-6 max-w-lg mx-auto">
+    <h1 class="text-2xl font-bold">Whackabot!</h1>
+    <p class="text-md text-gray-700 text-center">
+        Shoot at the bot by pressing <code>q</code>, <code>w</code>, or <code>e</code> on your keyboard, or tap on the boxes below! The bot will try to dodge your shots. 
+    </p>
+
+    <!-- Game Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full max-w-lg">
+        <!-- Box Q -->
+        <div class="box bg-blue-200 rounded-lg shadow-lg cursor-pointer" onclick="simulateShot('q')">
+            <!-- Q Label -->
+            <code class="absolute top-2 left-2 bg-white bg-opacity-75 px-1 py-0.5 rounded text-md font-mono">Q</code>
+            <div class="content">
+                <span class="bot" id="bot-q">🤖</span>
+                <div class="explosion" id="explosion-q">💥</div>
+                <div class="sparkler" id="sparkler-q">✨</div>
+                <div class="feedback" id="feedback-q"></div>
+            </div>
+        </div>
+        <!-- Box W -->
+        <div class="box bg-green-200 rounded-lg shadow-lg cursor-pointer" onclick="simulateShot('w')">
+            <!-- W Label -->
+            <code class="absolute top-2 left-2 bg-white bg-opacity-75 px-1 py-0.5 rounded text-md font-mono">W</code>
+            <div class="content">
+                <span class="bot" id="bot-w">🤖</span>
+                <div class="explosion" id="explosion-w">💥</div>
+                <div class="sparkler" id="sparkler-w">✨</div>
+                <div class="feedback" id="feedback-w"></div>
+            </div>
+        </div>
+        <!-- Box E -->
+        <div class="box bg-red-200 rounded-lg shadow-lg cursor-pointer" onclick="simulateShot('e')">
+            <!-- E Label -->
+            <code class="absolute top-2 left-2 bg-white bg-opacity-75 px-1 py-0.5 rounded text-md font-mono">E</code>
+            <div class="content">
+                <span class="bot" id="bot-e">🤖</span>
+                <div class="explosion" id="explosion-e">💥</div>
+                <div class="sparkler" id="sparkler-e">✨</div>
+                <div class="feedback" id="feedback-e"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Section -->
+    <div class="w-full max-w-lg">
+        <div class="text-lg font-semibold text-center">
+            Hit Accuracy: <span id="hitAccuracy">Keep hitting!</span>
+        </div>
+        <div class="text-md text-center">
+            Hits: <span id="hitCount">0</span> | Dodges: <span id="dodgeCount">0</span>
+        </div>
+    </div>
+
+    <!-- Last 20 Shots Table -->
+    <div class="w-full max-w-lg">
+        <h2 class="text-2xl font-semibold mb-4">Last 20 Shots</h2>
+        <div class="flex justify-center">
+            <div class="w-full overflow-x-auto">
+                <table class="min-w-full bg-white rounded-lg shadow-md">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Player Choice</th>
+                            <th>Bot Position</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lastShotsTable">
+                        <!-- Rows will be added here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const N = 3;  // Maximum n-gram size
+        const keys = ['q', 'w', 'e'];
+        let history = '';
+        const ngramHistory = {};  // Track patterns in user shots
+        let totalAttempts = 0;
+        let successfulHits = 0;
+        let dodgedCount = 0;
+
+        // For last 20 shots
+        const last20Shots = [];
+        const maxLastShots = 20;
+
+        // Bot position counts for frequency-based prediction
+        const playerChoiceCounts = { 'q': 0, 'w': 0, 'e': 0 };
+
+        const hitAccuracyDiv = document.getElementById('hitAccuracy');
+        const hitCountDiv = document.getElementById('hitCount');
+        const dodgeCountDiv = document.getElementById('dodgeCount');
+        const lastShotsTable = document.getElementById('lastShotsTable');
+
+        const botElements = {
+            'q': document.getElementById('bot-q'),
+            'w': document.getElementById('bot-w'),
+            'e': document.getElementById('bot-e'),
+        };
+        const explosionElements = {
+            'q': document.getElementById('explosion-q'),
+            'w': document.getElementById('explosion-w'),
+            'e': document.getElementById('explosion-e'),
+        };
+        const sparklerElements = {
+            'q': document.getElementById('sparkler-q'),
+            'w': document.getElementById('sparkler-w'),
+            'e': document.getElementById('sparkler-e'),
+        };
+        const feedbackElements = {
+            'q': document.getElementById('feedback-q'),
+            'w': document.getElementById('feedback-w'),
+            'e': document.getElementById('feedback-e'),
+        };
+
+        function updateStats() {
+            const accuracy = totalAttempts === 0 ? 0 : ((successfulHits / totalAttempts) * 100).toFixed(2);
+            if (totalAttempts < 10) {
+                hitAccuracyDiv.textContent = `Keep hitting!`;
+                hitCountDiv.textContent = `--`;
+                dodgeCountDiv.textContent = `--`;
+            } else {
+                hitAccuracyDiv.textContent = `${accuracy}%`;
+                hitCountDiv.textContent = successfulHits;
+                dodgeCountDiv.textContent = dodgedCount;
+            }
+        }
+
+        function predictBotPosition() {
+            // Attempt to use n-gram logic
+            for (let n = N; n > 0; n--) {
+                if (history.length < n) continue;
+                let gram = history.slice(-n);
+                const counts = ngramHistory[gram] || { 'q': 0, 'w': 0, 'e': 0 };
+
+                // Find the least frequent square(s)
+                const minCount = Math.min(...keys.map(k => counts[k]));
+                const leastLikelyKeys = keys.filter(k => counts[k] === minCount);
+
+                if (leastLikelyKeys.length === 1) {
+                    return leastLikelyKeys[0];
+                }
+                // If multiple least likely squares, continue to lower n-gram
+            }
+
+            // If no n-gram provides a unique prediction, use frequency-based prediction
+            // Find the least frequently chosen square by the player
+            const minPlayerCount = Math.min(...keys.map(k => playerChoiceCounts[k]));
+            const leastLikelyKeys = keys.filter(k => playerChoiceCounts[k] === minPlayerCount);
+
+            if (leastLikelyKeys.length > 0) {
+                return leastLikelyKeys[Math.floor(Math.random() * leastLikelyKeys.length)];
+            }
+
+            // Fallback to random choice
+            return keys[Math.floor(Math.random() * keys.length)];
+        }
+
+        function handleShot(playerChoice) {
+            const botPosition = predictBotPosition();
+            totalAttempts++;
+
+            let feedbackText = '';
+            let feedbackClass = '';
+            let rowClass = '';
+
+            if (playerChoice === botPosition) {
+                // Player hit the bot
+                feedbackText = "Hit!";
+                feedbackClass = "feedback hit-feedback";
+                successfulHits++;
+                rowClass = "hit-row";
+                // Show explosion
+                const explosion = explosionElements[playerChoice];
+                explosion.style.opacity = "1";
+                setTimeout(() => {
+                    explosion.style.opacity = "0";
+                }, 300);
+            } else {
+                // Bot dodged the shot
+                feedbackText = "Dodged!";
+                feedbackClass = "feedback dodged-feedback";
+                dodgedCount++;
+                rowClass = "dodged-row";
+                // Show sparkler
+                const sparkler = sparklerElements[playerChoice];
+                sparkler.style.opacity = "1";
+                setTimeout(() => {
+                    sparkler.style.opacity = "0";
+                }, 300);
+            }
+
+            // Update feedback
+            const feedback = feedbackElements[playerChoice];
+            feedback.textContent = feedbackText;
+            feedback.className = feedbackClass;
+            feedback.style.opacity = "1";
+
+            updateStats();
+            trackNgram(playerChoice);
+            showBot(botPosition);
+            addToLastShots(playerChoice, botPosition, rowClass);
+
+            // Hide feedback after a short delay
+            setTimeout(() => {
+                feedback.style.opacity = "0";
+            }, 800);
+        }
+
+        function trackNgram(choice) {
+            if (!ngramHistory[history]) {
+                ngramHistory[history] = { 'q': 0, 'w': 0, 'e': 0 };
+            }
+            ngramHistory[history][choice]++;
+            history = (history + choice).slice(-N);
+        }
+
+        function simulateShot(choice) {
+            handleShot(choice);
+            // Update player choice counts
+            playerChoiceCounts[choice]++;
+        }
+
+        function showBot(botPosition) {
+            Object.values(botElements).forEach(bot => {
+                bot.style.opacity = "0";
+                bot.style.transform = "translateY(50%) scale(0.5)";
+            });
+
+            const activeBot = botElements[botPosition];
+            activeBot.style.opacity = "1";
+            activeBot.style.transform = "translateY(0) scale(1)";
+        }
+
+        function addToLastShots(playerChoice, botPosition, rowClass) {
+            last20Shots.push({ playerChoice, botPosition, rowClass });
+            if (last20Shots.length > maxLastShots) {
+                last20Shots.shift();
+            }
+            updateLastShotsTable();
+        }
+
+        function updateLastShotsTable() {
+            lastShotsTable.innerHTML = '';
+            last20Shots.slice().reverse().forEach((shot, index) => {
+                const row = document.createElement('tr');
+                row.className = shot.rowClass;
+
+                // Shot Number
+                const cellNumber = document.createElement('td');
+                cellNumber.textContent = last20Shots.length - index;
+                row.appendChild(cellNumber);
+
+                // Player Choice
+                const cellPlayer = document.createElement('td');
+                cellPlayer.textContent = shot.playerChoice.toUpperCase();
+                row.appendChild(cellPlayer);
+
+                // Bot Position
+                const cellBot = document.createElement('td');
+                cellBot.textContent = shot.botPosition.toUpperCase();
+                row.appendChild(cellBot);
+
+                lastShotsTable.appendChild(row);
+            });
+        }
+
+        document.addEventListener('keydown', (e) => {
+            const key = e.key.toLowerCase();
+            if (keys.includes(key)) simulateShot(key);
+        });
+
+        // Initialize bots to a default position
+        showBot('q');
+    </script>
+</body>
+</html>
