@@ -1,4 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Define Game States
+    const GAME_STATES = {
+        AWAITING_INPUT: 'awaiting_input',
+        TURN_SUBMITTED: 'turn_submitted',
+    };
+
     // Initialize game state
     let gameState = {
         player_pos: 1,
@@ -20,11 +26,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let playerMove = null;
     let playerShotTarget = null;
+    let currentState = GAME_STATES.AWAITING_INPUT; // Initialize current state
+
+    // Function to update the current state
+    const setState = (newState) => {
+        currentState = newState;
+        updateButtonVisibility();
+    };
+
+    // Function to update button visibility based on state
+    const updateButtonVisibility = () => {
+        const submitButton = document.getElementById('submit-move');
+        const nextTurnButton = document.getElementById('next-turn');
+
+        if (currentState === GAME_STATES.AWAITING_INPUT) {
+            submitButton.classList.remove('hidden');
+            nextTurnButton.classList.add('hidden');
+        } else if (currentState === GAME_STATES.TURN_SUBMITTED) {
+            submitButton.classList.add('hidden');
+            nextTurnButton.classList.remove('hidden');
+        }
+    };
+
+    // Initialize button visibility
+    updateButtonVisibility();
 
     // Function to check if both selections are made
     const checkSubmitEnabled = () => {
         const submitButton = document.getElementById('submit-move');
-        if (playerMove && playerShotTarget) {
+        if (playerMove && playerShotTarget && currentState === GAME_STATES.AWAITING_INPUT) {
             submitButton.disabled = false;
         } else {
             submitButton.disabled = true;
@@ -35,6 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const playerStands = document.querySelectorAll('.player-stand');
     playerStands.forEach(stand => {
         stand.addEventListener('click', function() {
+            if (currentState !== GAME_STATES.AWAITING_INPUT) return; // Only allow in AWAITING_INPUT state
             playerMove = parseInt(this.dataset.stand);
             selectPlayerStand(playerMove);
             checkSubmitEnabled();
@@ -45,6 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const botStands = document.querySelectorAll('.bot-stand');
     botStands.forEach(stand => {
         stand.addEventListener('click', function() {
+            if (currentState !== GAME_STATES.AWAITING_INPUT) return; // Only allow in AWAITING_INPUT state
             playerShotTarget = parseInt(this.dataset.stand);
             selectBotStand(playerShotTarget);
             checkSubmitEnabled();
@@ -54,25 +86,30 @@ document.addEventListener('DOMContentLoaded', () => {
     // Submit Move button click event
     const submitMoveButton = document.getElementById('submit-move');
     submitMoveButton.addEventListener('click', () => {
+        if (currentState !== GAME_STATES.AWAITING_INPUT) return; // Only allow in AWAITING_INPUT state
+        if (!playerMove || !playerShotTarget) return; // Ensure selections are made
+
         // Disable interactions
         submitMoveButton.disabled = true;
         playerStands.forEach(stand => stand.style.pointerEvents = 'none');
-        botStands.forEach(stand => stand.style.pointerEvents = 'none');
+        botStands.forEach(stand => stand.style.pointerEvents = 'none'); // <-- Fixed syntax error
 
         // Proceed with the game logic
         processTurn();
         updateUI();
-        document.getElementById('next-turn').classList.remove('hidden');
+        setState(GAME_STATES.TURN_SUBMITTED);
     });
 
     // Next Turn button click event
     const nextTurnButton = document.getElementById('next-turn');
     nextTurnButton.addEventListener('click', () => {
+        if (currentState !== GAME_STATES.TURN_SUBMITTED) return; // Only allow in TURN_SUBMITTED state
+
         // Reset for next turn
         playerMove = null;
         playerShotTarget = null;
-        submitMoveButton.disabled = true;
-        nextTurnButton.classList.add('hidden');
+        setState(GAME_STATES.AWAITING_INPUT);
+        checkSubmitEnabled();
         playerStands.forEach(stand => {
             stand.classList.remove('border-blue-500', 'bg-blue-100');
             stand.style.pointerEvents = 'auto';
@@ -257,34 +294,37 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', (event) => {
         const key = event.key.toLowerCase();
 
-        // Player Move Targeting (Keys: Q, W, E)
-        if (['q', 'w', 'e'].includes(key)) {
-            const keyMap = { 'q': 1, 'w': 2, 'e': 3 };
-            playerMove = keyMap[key];
-            selectPlayerStand(playerMove);
-            checkSubmitEnabled();
-        }
-
-        // Bot Stand Targeting (Keys: 1, 2, 3)
-        if (['1', '2', '3'].includes(key)) {
-            playerShotTarget = parseInt(key);
-            selectBotStand(playerShotTarget);
-            checkSubmitEnabled();
-        }
-
-        // Submit Move (Key: Enter)
-        if (event.key === 'Enter') {
-            if (!submitMoveButton.disabled) {
-                submitMoveButton.click();
+        if (currentState === GAME_STATES.AWAITING_INPUT) {
+            // Player Move Targeting (Keys: Q, W, E)
+            if (['q', 'w', 'e'].includes(key)) {
+                const keyMap = { 'q': 1, 'w': 2, 'e': 3 };
+                playerMove = keyMap[key];
+                selectPlayerStand(playerMove);
+                checkSubmitEnabled();
             }
-        }
 
-        // Next Turn (Key: Spacebar)
-        if (event.key === ' ') {
-            if (!nextTurnButton.classList.contains('hidden')) {
-                nextTurnButton.click();
+            // Bot Stand Targeting (Keys: 1, 2, 3)
+            if (['1', '2', '3'].includes(key)) {
+                playerShotTarget = parseInt(key);
+                selectBotStand(playerShotTarget);
+                checkSubmitEnabled();
             }
-            event.preventDefault(); // Prevent page scrolling
+
+            // Submit Move (Key: Enter or Space)
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault(); // Prevent default actions like form submissions or page scrolling
+                if (!submitMoveButton.disabled) {
+                    submitMoveButton.click();
+                }
+            }
+        } else if (currentState === GAME_STATES.TURN_SUBMITTED) {
+            // Next Turn (Key: Enter or Space)
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault(); // Prevent default actions like form submissions or page scrolling
+                if (!nextTurnButton.classList.contains('hidden')) {
+                    nextTurnButton.click();
+                }
+            }
         }
     });
 
