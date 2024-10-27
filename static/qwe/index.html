@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>QWE Predictor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: auto;
+        }
+        #accuracy {
+            font-size: 24px;
+            margin-bottom: 20px;
+            margin-top: 20px;
+        }
+        #instructions {
+            margin-bottom: 20px;
+            color: #555;
+        }
+        .buttons {
+            display: none;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .button {
+            flex: 1;
+            font-size: 24px;
+            padding: 20px;
+            text-align: center;
+            background-color: #ddd;
+            border: 1px solid #aaa;
+            border-radius: 10px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .button:active {
+            background-color: #bbb;
+        }
+        @media (max-width: 768px) {
+            .buttons {
+                display: flex;
+            }
+            .buttons.horizontal {
+                flex-direction: row;
+            }
+            .buttons.vertical {
+                flex-direction: column;
+            }
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        th, td {
+            border: 1px solid #aaa;
+            padding: 6px;
+            text-align: center;
+            word-wrap: break-word;
+        }
+        .correct {
+            background-color: #fdd;
+        }
+    </style>
+</head>
+<body>
+    <div id="accuracy">Prediction Accuracy: 0%</div>
+    <div id="instructions">Press Q, W, or E on your keyboard and I will try to guess what you clicked. Based on the <a href="https://people.ischool.berkeley.edu/~nick/aaronson-oracle/" target="_blank">aaronson-oracle</a>. </div>
+
+    <div class="buttons horizontal" id="buttonContainer">
+        <div class="button" onclick="simulateKeyPress('q')">Q</div>
+        <div class="button" onclick="simulateKeyPress('w')">W</div>
+        <div class="button" onclick="simulateKeyPress('e')">E</div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Round</th>
+                <th>Your Choice</th>
+                <th>My Prediction</th>
+            </tr>
+        </thead>
+        <tbody id="tally">
+            <!-- Rows will be added here -->
+        </tbody>
+    </table>
+
+    <script>
+        const N = 5;
+        const keys = ['q', 'w', 'e'];
+        let history = '';
+        const ngramCounts = {};
+        let totalPredictions = 0;
+        let correctPredictions = 0;
+        let round = 1;
+
+        const accuracyDiv = document.getElementById('accuracy');
+        const tallyBody = document.getElementById('tally');
+        const buttonContainer = document.getElementById('buttonContainer');
+
+        function updateAccuracy() {
+            const accuracy = totalPredictions === 0 ? 0 : ((correctPredictions / totalPredictions) * 100).toFixed(2);
+            accuracyDiv.textContent = `Prediction Accuracy: ${accuracy}%`;
+        }
+
+        function predictNext() {
+            for (let n = N; n > 0; n--) {
+                if (history.length >= n) {
+                    const gram = history.slice(-n);
+                    if (ngramCounts[gram]) {
+                        const counts = ngramCounts[gram];
+                        let max = -1;
+                        let prediction = keys[Math.floor(Math.random() * keys.length)];
+                        for (const key of keys) {
+                            if (counts[key] > max) {
+                                max = counts[key];
+                                prediction = key;
+                            }
+                        }
+                        return prediction;
+                    }
+                }
+            }
+            return keys[Math.floor(Math.random() * keys.length)];
+        }
+
+        function handleKeyPress(e) {
+            const key = e.key.toLowerCase();
+            if (!keys.includes(key)) return;
+            processInput(key);
+        }
+
+        function simulateKeyPress(key) {
+            processInput(key);
+        }
+
+        function processInput(key) {
+            const prediction = predictNext();
+            totalPredictions++;
+            const isCorrect = (key === prediction);
+            if (isCorrect) correctPredictions++;
+
+            updateAccuracy();
+
+            for (let n = 1; n <= N; n++) {
+                if (history.length >= n) {
+                    const gram = history.slice(-n);
+                    if (!ngramCounts[gram]) {
+                        ngramCounts[gram] = { 'q': 0, 'w': 0, 'e': 0 };
+                    }
+                    ngramCounts[gram][key]++;
+                }
+            }
+
+            history += key;
+            if (history.length > N) {
+                history = history.slice(-N);
+            }
+
+            const row = document.createElement('tr');
+            const roundCell = document.createElement('td');
+            roundCell.textContent = round++;
+            const choiceCell = document.createElement('td');
+            choiceCell.textContent = key;
+            const predictionCell = document.createElement('td');
+            predictionCell.textContent = prediction;
+            if (isCorrect) {
+                choiceCell.classList.add('correct');
+                predictionCell.classList.add('correct');
+            }
+            row.appendChild(roundCell);
+            row.appendChild(choiceCell);
+            row.appendChild(predictionCell);
+
+            if (tallyBody.firstChild) {
+                tallyBody.insertBefore(row, tallyBody.firstChild);
+            } else {
+                tallyBody.appendChild(row);
+            }
+
+            while (tallyBody.rows.length > 20) {
+                tallyBody.removeChild(tallyBody.lastChild);
+            }
+        }
+
+        function adjustButtonLayout() {
+            const isVertical = window.innerWidth < 400;
+            buttonContainer.className = isVertical ? 'buttons vertical' : 'buttons horizontal';
+        }
+
+        window.addEventListener('resize', adjustButtonLayout);
+        document.addEventListener('keydown', handleKeyPress);
+        adjustButtonLayout();
+    </script>
+</body>
+</html>
