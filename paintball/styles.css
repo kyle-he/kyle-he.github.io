@@ -1,0 +1,68 @@
+/* Styles for the stands */
+.player-stand, .bot-stand {
+    position: relative;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
+    min-height: 150px; /* Adjusted for larger stands */
+}
+
+.player-stand:hover, .bot-stand:hover {
+    transform: scale(1.05);
+    background-color: #e2e8f0; /* Tailwind's gray-300 */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+}
+
+.player-stand .player-icon, .bot-stand .bot-icon {
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.stand-number {
+    position: absolute;
+    top: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.shot-indicator {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+}
+
+.border-blue-500 {
+    border-color: #3b82f6;
+}
+
+.border-red-500 {
+    border-color: #ef4444;
+}
+
+.bg-blue-100 {
+    background-color: #dbeafe;
+}
+
+.bg-red-100 {
+    background-color: #fee2e2;
+}
+
+/* Button Styles */
+button {
+    transition: background-color 0.2s;
+}
+
+/* Additional Styles for Turn Log */
+#turn-log p {
+    margin-bottom: 0.5rem;
+}
+
+.hit {
+    color: #16a34a; /* Tailwind's green-600 */
+}
+
+.miss {
+    color: #dc2626; /* Tailwind's red-600 */
+}

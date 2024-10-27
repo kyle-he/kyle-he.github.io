@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Include Tailwind CSS via CDN -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paintball Duel</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.7/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-gray-100 px-8 py-4"> <!-- Added horizontal and vertical padding -->
+    <!-- Flex Container to Split the Screen -->
+    <div class="flex flex-col md:flex-row md:space-x-8"> <!-- Added space between columns for better spacing -->
+        <!-- Left Two-Thirds: Game Board and Controls -->
+        <div class="w-full md:w-2/3 p-4"> <!-- Changed width to 2/3 and added background for clarity -->
+            <!-- Header -->
+            <h1 class="text-4xl font-bold text-center mt-8 mb-8">Paintball Duel</h1>
+
+            <!-- Stats and Scores -->
+            <div class="mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Player Stats -->
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h2 class="text-2xl font-semibold mb-4 text-center">Your Stats</h2>
+                        <p class="text-lg">Accuracy: <span id="player-accuracy" class="font-bold">0%</span></p>
+                        <p class="text-lg">Total Hits: <span id="player-hits" class="font-bold">0</span></p>
+                    </div>
+                    <!-- Overall Stats -->
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h2 class="text-2xl font-semibold mb-4 text-center">Game Stats</h2>
+                        <p class="text-lg">Total Turns: <span id="total-turns" class="font-bold">0</span></p>
+                    </div>
+                    <!-- Bot Stats -->
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h2 class="text-2xl font-semibold mb-4 text-center">Bot's Stats</h2>
+                        <p class="text-lg">Accuracy: <span id="bot-accuracy" class="font-bold">0%</span></p>
+                        <p class="text-lg">Total Hits: <span id="bot-hits" class="font-bold">0</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Board -->
+            <div class="game-board mb-6">
+                <!-- Bot Stands -->
+                <div>
+                    <h2 class="text-xl font-semibold mb-2 text-center">Bot's Stands</h2>
+                    <div class="flex space-x-4">
+                        <div class="bot-stand stand-1 border p-4 flex justify-center items-center bg-gray-200 rounded-lg shadow-md flex-1" data-stand="1">
+                            <span class="stand-number text-lg font-bold">1</span>
+                        </div>
+                        <div class="bot-stand stand-2 border p-4 flex justify-center items-center bg-gray-200 rounded-lg shadow-md flex-1" data-stand="2">
+                            <span class="stand-number text-lg font-bold">2</span>
+                        </div>
+                        <div class="bot-stand stand-3 border p-4 flex justify-center items-center bg-gray-200 rounded-lg shadow-md flex-1" data-stand="3">
+                            <span class="stand-number text-lg font-bold">3</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Spacer -->
+                <div class="h-8"></div>
+
+                <!-- Player Stands -->
+                <div>
+                    <h2 class="text-xl font-semibold mb-2 text-center">Your Stands</h2>
+                    <div class="flex space-x-4">
+                        <div class="player-stand stand-1 border p-4 flex justify-center items-center bg-gray-200 rounded-lg shadow-md flex-1" data-stand="1">
+                            <span class="stand-number text-lg font-bold">1</span>
+                        </div>
+                        <div class="player-stand stand-2 border p-4 flex justify-center items-center bg-gray-200 rounded-lg shadow-md flex-1" data-stand="2">
+                            <span class="stand-number text-lg font-bold">2</span>
+                        </div>
+                        <div class="player-stand stand-3 border p-4 flex justify-center items-center bg-gray-200 rounded-lg shadow-md flex-1" data-stand="3">
+                            <span class="stand-number text-lg font-bold">3</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="mb-6 text-center">
+                <button id="submit-move" class="bg-blue-600 text-white px-6 py-2 rounded disabled:opacity-50 hover:bg-blue-700" disabled>Submit Move</button>
+                <button id="next-turn" class="bg-green-600 text-white px-6 py-2 rounded hidden hover:bg-green-700">Next Turn</button>
+            </div>
+        </div>
+
+        <!-- Right One-Third: Running Log -->
+        <div class="w-full md:w-1/3 p-4"> <!-- Changed width to 1/3 and added background for clarity -->
+            <h2 class="text-2xl font-semibold mb-4 text-center">Turn Log</h2>
+            <div id="turn-log" class="h-full overflow-y-auto bg-white p-4 rounded-lg shadow" style="max-height: 80vh;">
+                <!-- Turn results will be displayed in two columns -->
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- Column for player's hits -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2">Your Hits</h3>
+                        <div id="player-log">
+                            <!-- Player's turn results will be appended here -->
+                        </div>
+                    </div>
+                    <!-- Column for bot's hits -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2">Bot's Hits</h3>
+                        <div id="bot-log">
+                            <!-- Bot's turn results will be appended here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include the JavaScript file -->
+    <script src="scripts.js"></script>
+</body>
+</html>
