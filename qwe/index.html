@@ -14,15 +14,11 @@
         #accuracy {
             font-size: 24px;
             margin-bottom: 20px;
+            margin-top: 20px;
         }
         #instructions {
-            margin-bottom: 10px;
-            color: #555;
-        }
-        #nextPrediction {
-            font-size: 18px;
             margin-bottom: 20px;
-            font-weight: bold;
+            color: #555;
         }
         .buttons {
             display: none;
@@ -43,15 +39,16 @@
         .button:active {
             background-color: #bbb;
         }
-        #copyButton, #loadButton {
-            margin: 10px 5px;
-            padding: 10px;
-            cursor: pointer;
-        }
-        textarea {
-            width: 100%;
-            height: 100px;
-            margin-bottom: 10px;
+        @media (max-width: 768px) {
+            .buttons {
+                display: flex;
+            }
+            .buttons.horizontal {
+                flex-direction: row;
+            }
+            .buttons.vertical {
+                flex-direction: column;
+            }
         }
         table {
             width: 100%;
@@ -71,16 +68,7 @@
 </head>
 <body>
     <div id="accuracy">Prediction Accuracy: 0%</div>
-    <div id="instructions">
-        Press Q, W, or E on your keyboard and I will try to guess what you clicked. 
-        Based on the <a href="https://people.ischool.berkeley.edu/~nick/aaronson-oracle/" target="_blank">aaronson-oracle</a>.
-    </div>
-    <div id="nextPrediction">Next Prediction: N/A</div>
-
-    <button id="copyButton">Copy Save File</button>
-    <button id="loadButton">Load N-Grams</button>
-
-    <textarea id="ngramInput" placeholder="Paste your n-gram JSON here..."></textarea>
+    <div id="instructions">Press Q, W, or E on your keyboard and I will try to guess what you clicked. Based on the <a href="https://people.ischool.berkeley.edu/~nick/aaronson-oracle/" target="_blank">aaronson-oracle</a>. </div>
 
     <div class="buttons horizontal" id="buttonContainer">
         <div class="button" onclick="simulateKeyPress('q')">Q</div>
@@ -94,7 +82,6 @@
                 <th>Round</th>
                 <th>Your Choice</th>
                 <th>My Prediction</th>
-                <th>Edit</th>
             </tr>
         </thead>
         <tbody id="tally">
@@ -105,29 +92,25 @@
     <script>
         const N = 5;
         const keys = ['q', 'w', 'e'];
-        let history = [];  // Store each press and prediction as objects { choice, prediction }
-        let ngramCounts = {};
+        let history = '';
+        const ngramCounts = {};
+        let totalPredictions = 0;
+        let correctPredictions = 0;
         let round = 1;
 
         const accuracyDiv = document.getElementById('accuracy');
-        const nextPredictionDiv = document.getElementById('nextPrediction');
         const tallyBody = document.getElementById('tally');
-        const copyButton = document.getElementById('copyButton');
-        const loadButton = document.getElementById('loadButton');
-        const ngramInput = document.getElementById('ngramInput');
         const buttonContainer = document.getElementById('buttonContainer');
 
         function updateAccuracy() {
-            const correctCount = history.filter(entry => entry.choice === entry.prediction).length;
-            const totalRows = history.length;
-            const accuracy = totalRows === 0 ? 0 : ((correctCount / totalRows) * 100).toFixed(2);
+            const accuracy = totalPredictions === 0 ? 0 : ((correctPredictions / totalPredictions) * 100).toFixed(2);
             accuracyDiv.textContent = `Prediction Accuracy: ${accuracy}%`;
         }
 
         function predictNext() {
             for (let n = N; n > 0; n--) {
                 if (history.length >= n) {
-                    const gram = history.slice(-n).map(entry => entry.choice).join('');
+                    const gram = history.slice(-n);
                     if (ngramCounts[gram]) {
                         const counts = ngramCounts[gram];
                         let max = -1;
@@ -145,9 +128,6 @@
             return keys[Math.floor(Math.random() * keys.length)];
         }
 
-        let nextPrediction = predictNext();
-        nextPredictionDiv.textContent = `Next Prediction: ${nextPrediction.toUpperCase()}`;
-
         function handleKeyPress(e) {
             const key = e.key.toLowerCase();
             if (!keys.includes(key)) return;
@@ -159,97 +139,61 @@
         }
 
         function processInput(key) {
-            const prediction = nextPrediction;
-            history.push({ choice: key, prediction });
+            const prediction = predictNext();
+            totalPredictions++;
+            const isCorrect = (key === prediction);
+            if (isCorrect) correctPredictions++;
 
-            updateNGramCounts(key);
-            addRow(key, prediction);
             updateAccuracy();
 
-            nextPrediction = predictNext();
-            nextPredictionDiv.textContent = `Next Prediction: ${nextPrediction.toUpperCase()}`;
-        }
+            for (let n = 1; n <= N; n++) {
+                if (history.length >= n) {
+                    const gram = history.slice(-n);
+                    if (!ngramCounts[gram]) {
+                        ngramCounts[gram] = { 'q': 0, 'w': 0, 'e': 0 };
+                    }
+                    ngramCounts[gram][key]++;
+                }
+            }
 
-        function updateNGramCounts(key) {
-            const gram = history.slice(-N).map(entry => entry.choice).join('');
-            if (!ngramCounts[gram]) ngramCounts[gram] = { 'q': 0, 'w': 0, 'e': 0 };
-            ngramCounts[gram][key]++;
-        }
+            history += key;
+            if (history.length > N) {
+                history = history.slice(-N);
+            }
 
-        function addRow(choice, prediction) {
             const row = document.createElement('tr');
             const roundCell = document.createElement('td');
             roundCell.textContent = round++;
-
             const choiceCell = document.createElement('td');
-            choiceCell.textContent = choice;
-
+            choiceCell.textContent = key;
             const predictionCell = document.createElement('td');
             predictionCell.textContent = prediction;
-
-            const editCell = document.createElement('td');
-            const editButton = document.createElement('button');
-            editButton.textContent = 'Edit';
-            editButton.onclick = () => editRow(row, choiceCell, predictionCell);
-            editCell.appendChild(editButton);
-
-            updateRowHighlighting(choiceCell, predictionCell, choice, prediction);
-
+            if (isCorrect) {
+                choiceCell.classList.add('correct');
+                predictionCell.classList.add('correct');
+            }
             row.appendChild(roundCell);
             row.appendChild(choiceCell);
             row.appendChild(predictionCell);
-            row.appendChild(editCell);
 
-            tallyBody.insertBefore(row, tallyBody.firstChild);
-        }
-
-        function updateRowHighlighting(choiceCell, predictionCell, choice, prediction) {
-            if (choice === prediction) {
-                choiceCell.classList.add('correct');
-                predictionCell.classList.add('correct');
+            if (tallyBody.firstChild) {
+                tallyBody.insertBefore(row, tallyBody.firstChild);
             } else {
-                choiceCell.classList.remove('correct');
-                predictionCell.classList.remove('correct');
+                tallyBody.appendChild(row);
+            }
+
+            while (tallyBody.rows.length > 20) {
+                tallyBody.removeChild(tallyBody.lastChild);
             }
         }
-
-        function editRow(row, choiceCell, predictionCell) {
-            const newChoice = prompt('Enter new choice (q, w, or e):', choiceCell.textContent);
-            if (newChoice && keys.includes(newChoice)) {
-                const roundIndex = parseInt(row.cells[0].textContent) - 1;
-                history[roundIndex].choice = newChoice;
-
-                choiceCell.textContent = newChoice;
-                updateRowHighlighting(choiceCell, predictionCell, newChoice, predictionCell.textContent);
-                updateAccuracy();
-            }
-        }
-
-        copyButton.addEventListener('click', () => {
-            const saveFile = JSON.stringify(ngramCounts, null, 2);
-            navigator.clipboard.writeText(saveFile).then(() => {
-                alert('Save file copied to clipboard!');
-            }).catch(err => console.error('Failed to copy:', err));
-        });
-
-        loadButton.addEventListener('click', () => {
-            try {
-                const loadedData = JSON.parse(ngramInput.value);
-                ngramCounts = loadedData;
-                alert('N-Grams loaded successfully!');
-            } catch (error) {   
-                alert('Invalid JSON format. Please check your input.');
-            }
-        });
-
-        window.addEventListener('resize', adjustButtonLayout);
-        document.addEventListener('keydown', handleKeyPress);
 
         function adjustButtonLayout() {
             const isVertical = window.innerWidth < 400;
             buttonContainer.className = isVertical ? 'buttons vertical' : 'buttons horizontal';
         }
 
+        window.addEventListener('resize', adjustButtonLayout);
+        document.addEventListener('keydown', handleKeyPress);
         adjustButtonLayout();
     </script>
 </body>
