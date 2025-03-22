@@ -2,7 +2,7 @@
 title: How I computer in 2025
 date: '2025-03-22'
 description: all the software and hardware i use
-publish: True
+publish: False
 ---
 
 I love learning about how other people use their devices—I've discovered many great applications and useful tricks by seeing how my friends computer. 
