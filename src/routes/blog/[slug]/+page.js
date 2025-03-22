@@ -1,8 +1,10 @@
 import { error } from '@sveltejs/kit';
 
+export const prerender = true;
+
 export async function load({ params }) {
     try {
-        const post = await import(`/src/posts/${params.slug}.md`);
+        const post = await import(`../../../posts/${params.slug}.md`);
         
         if (!post || !post.metadata) {
             throw error(404, `Invalid post format for ${params.slug}`);
