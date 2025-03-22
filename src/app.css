@@ -1,3 +1,56 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Markdown styles that match the site's design */
+.markdown {
+    @apply font-serif text-base;
+}
+
+.markdown h1 {
+    @apply text-2xl font-bold mt-8 mb-4;
+}
+
+.markdown h2 {
+    @apply text-xl font-semibold mt-8 mb-4;
+}
+
+.markdown h3 {
+    @apply text-lg font-semibold mt-6 mb-3;
+}
+
+.markdown p {
+    @apply mt-4;
+}
+
+.markdown ul {
+    @apply mt-4 ml-6 list-disc;
+}
+
+.markdown ol {
+    @apply mt-4 ml-6 list-decimal;
+}
+
+.markdown li {
+    @apply mt-2;
+}
+
+.markdown pre {
+    @apply mt-4 p-4 bg-gray-50 rounded-lg overflow-auto;
+}
+
+.markdown code {
+    @apply font-mono text-sm;
+}
+
+.markdown a {
+    @apply text-blue-700 hover:underline transition duration-300;
+}
+
+.markdown blockquote {
+    @apply pl-4 border-l-4 border-gray-200 italic mt-4;
+}
+
+.markdown hr {
+    @apply my-8 border-gray-200;
+}
