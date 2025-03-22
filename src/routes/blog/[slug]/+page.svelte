@@ -17,9 +17,8 @@
 </script>
 
 <Metadata meta={{
-    title: `${data.metadata.title} | Kyle He`,
+    title: `Kyle He - ${data.metadata.title}`,
     description: data.metadata.description || `${data.metadata.title} - A blog post by Kyle He`,
-    type: "article"
 }} />
 
 <main>

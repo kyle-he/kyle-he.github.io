@@ -5,8 +5,7 @@
 <Metadata
   meta={{
       title: "Kyle He",
-      description: "about me",
-      type: "profile",
+      description: "Kyle He's personal website",
   }}
 />
 

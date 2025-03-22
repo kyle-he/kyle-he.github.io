@@ -7,7 +7,6 @@
     meta={{
         title: "Kyle He - Resume",
         description: "my resume",
-        type: "profile",
     }}
 />
 

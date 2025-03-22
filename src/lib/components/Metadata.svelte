@@ -1,10 +1,17 @@
 <script>
-    /** @type {{ title: string, description?: string, image?: string, type?: string }} */
+    import { page } from '$app/stores';
+
+    /** @type {{ title: string, description?: string, type?: string }} */
     export let meta = {
         title: 'Kyle He',
         description: 'I am a computer science student at USC',
-        type: 'website'
     };
+
+    // canonical url
+    $: url = `https://kylehe.com${$page.url.pathname}`;
+
+    // sharing url (testing)
+    $: socialUrl = `${$page.url.origin}${$page.url.pathname}`;
 </script>
 
 <svelte:head>
@@ -12,19 +19,17 @@
     <title>{meta.title}</title>
     <meta name="description" content={meta.description} />
     
+    <!-- Canonical URL -->
+    <link rel="canonical" href={url} />
+    
+    <!-- Additional SEO Meta Tags -->
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="Kyle He" />
+    
     <!-- Open Graph / Facebook -->
-    <meta property="og:type" content={meta.type} />
+    <meta property="og:type" content="website" />
     <meta property="og:title" content={meta.title} />
     <meta property="og:description" content={meta.description} />
-    <!-- {#if meta.image}
-        <meta property="og:image" content={meta.image} />
-    {/if} -->
-    
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={meta.title} />
-    <meta name="twitter:description" content={meta.description} />
-    <!-- {#if meta.image}
-        <meta name="twitter:image" content={meta.image} />
-    {/if} -->
+    <meta property="og:url" content={socialUrl} />
+    <meta property="og:site_name" content="Kyle He" />
 </svelte:head> 

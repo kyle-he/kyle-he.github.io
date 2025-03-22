@@ -27,7 +27,6 @@
 <Metadata meta={{
     title: "Kyle He - Blog",
     description: "my blog",
-    type: "blog"
 }} />
 
 <main>
