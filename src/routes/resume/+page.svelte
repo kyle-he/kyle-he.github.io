@@ -1,5 +1,6 @@
 <script>
     import Metadata from "$lib/components/Metadata.svelte";
+    import { base } from '$app/paths';
 </script>
 
 <Metadata
@@ -19,7 +20,7 @@
 
 <main>
     <p class="font-serif text-base text-left mt-8">
-        Here is a more comprehensive PDF version of my <a href="/kylehe_resume.pdf" class="text-blue-500 hover:underline">resume</a>.
+        Here is a more comprehensive PDF version of my <a href="{base}/kylehe_resume.pdf" class="text-blue-500 hover:underline">resume</a>.
     </p>
 
     <section class="mt-8 font-serif">

@@ -2,6 +2,7 @@
     import { onMount } from 'svelte';
     import { getAllPosts } from '$lib/utils';
     import Metadata from '$lib/components/Metadata.svelte';
+    import { base } from '$app/paths';
 
     /** @type {Array<{ slug: string, metadata: { title: string, date: string, description?: string } }>} */
     let posts = [];
@@ -41,7 +42,7 @@
         {#each posts as post}
             <article class="font-serif mt-8 pb-8 border-b border-gray-200">
                 <h2 class="text-2xl font-semibold">
-                    <a href="/blog/{post.slug}" class="text-blue-700 hover:underline transition duration-300">
+                    <a href="{base}/blog/{post.slug}" class="text-blue-700 hover:underline transition duration-300">
                         {post.metadata.title}
                     </a>
                 </h2>
