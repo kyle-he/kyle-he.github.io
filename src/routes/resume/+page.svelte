@@ -19,7 +19,7 @@
 
 <main>
     <p class="font-serif text-base text-left mt-8">
-        Here is a more comprehensive PDF version of my <a href="{base}/kylehe_resume.pdf" class="text-blue-500 hover:underline">resume</a>.
+        If you prefer a PDF, you can view it <a href="{base}/kylehe_resume.pdf" class="text-blue-500 hover:underline">here.</a>
     </p>
 
     <section class="mt-8 font-serif">
@@ -29,9 +29,16 @@
                 <p class="font-semibold">
                     University of Southern California
                 </p>
+                <p class="text-gray-600">2025 - 2026</p>
+            </div>
+            <p><i>M.S. in Computer Science</i></p>
+            <div class="flex justify-between items-center">
+                <p class="font-semibold">
+                    University of Southern California
+                </p>
                 <p class="text-gray-600">2022 - 2026</p>
             </div>
-            <p>B.S. and M.S. in Computer Science</p>
+            <p><i>B.S. in Computer Science</i></p>
         </div>
         <ul class="list-disc ml-6 mt-2">
             <li>GPA: 3.9/4.0</li>
@@ -44,7 +51,7 @@
         <div class="mt-4">
             <div class="mb-4">
                 <p class="font-semibold">SWE Intern @ Meta</p>
-                <p class="text-gray-600">Summer 2026 - New York City, NY</p>
+                <p class="text-gray-600">June 2026 - August 2026<i class="fas fa-circle text-[4px] mx-2 align-middle"></i>New York City, NY</p>
                 <ul class="list-disc ml-6 mt-2">
                     <li>TBD</li>
                 </ul>
@@ -52,17 +59,17 @@
 
             <div class="mb-4">
                 <p class="font-semibold">SWE Intern @ Bloomberg</p>
-                <p class="text-gray-600">Summer 2025 - New York City, NY</p>
+                <p class="text-gray-600">June 2025 - August 2025<i class="fas fa-circle text-[4px] mx-2 align-middle"></i>New York City, NY</p>
                 <ul class="list-disc ml-6 mt-2">
-                    <li>Worked on an in-house database for market data</li>
+                    <li>Wrote C++ for Bloomberg's market data pipelines.</li>
                 </ul>
             </div>
 
             <div class="mb-4">
                 <p class="font-semibold">SWE Intern @ VMware</p>
-                <p class="text-gray-600">Summer 2024 - Remote</p>
+                <p class="text-gray-600">June 2025 - August 2025<i class="fas fa-circle text-[4px] mx-2 align-middle"></i>Remote</p>
                 <ul class="list-disc ml-6 mt-2">
-                    <li>Built a machine learning model to group duplicate bug reports</li>
+                    <li>Built some ML models to identify duplicate bug reports.</li>
                 </ul>
             </div>
         </div>
