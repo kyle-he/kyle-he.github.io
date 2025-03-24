@@ -18,21 +18,21 @@
 </head>
 
 <main>
-    <p class="font-serif text-base text-left mt-8">
-        If you prefer a PDF, you can view it <a href="{base}/kylehe_resume.pdf" class="text-blue-500 hover:underline">here.</a>
+    <p class="font-serif text-base text-left mt-12">
+        If you prefer a PDF, you can view it <a href="{base}/kylehe_resume.pdf" class="link-highlight">here.</a>
     </p>
 
-    <section class="mt-8 font-serif">
-        <h2 class="text-2xl font-semibold">Education</h2>
-        <div class="mt-4">
-            <div class="flex justify-between items-center">
+    <section class="mt-8">
+        <h2 class="font-serif text-2xl font-semibold">Education</h2>
+        <div class="font-serif">
+            <div class="mt-4 flex justify-between items-center">
                 <p class="font-semibold">
                     University of Southern California
                 </p>
                 <p class="text-gray-600">2025 - 2026</p>
             </div>
             <p><i>M.S. in Computer Science</i></p>
-            <div class="flex justify-between items-center">
+            <div class="mt-4 flex justify-between items-center">
                 <p class="font-semibold">
                     University of Southern California
                 </p>
@@ -40,15 +40,15 @@
             </div>
             <p><i>B.S. in Computer Science</i></p>
         </div>
-        <ul class="list-disc ml-6 mt-2">
+        <ul class="list-disc ml-6 mt-2 font-serif">
             <li>GPA: 3.9/4.0</li>
             <li>Course Producer for CSCI 170 (Discrete Math)</li>
         </ul>
     </section>
 
-    <section class="mt-8 font-serif">
-        <h2 class="text-2xl font-semibold">Experience</h2>
-        <div class="mt-4">
+    <section class="mt-8">
+        <h2 class="font-serif text-2xl font-semibold">Experience</h2>
+        <div class="mt-4 font-serif">
             <div class="mb-4">
                 <p class="font-semibold">SWE Intern @ Meta</p>
                 <p class="text-gray-600">June 2026 - August 2026<i class="fas fa-circle text-[4px] mx-2 align-middle"></i>New York City, NY</p>

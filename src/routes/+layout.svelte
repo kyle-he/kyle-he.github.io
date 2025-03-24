@@ -18,7 +18,7 @@
             <div class="w-[2.5rem] text-center">
                 <a 
                     href="{base}/blog" 
-                    class="text-blue-700 hover:underline transition duration-300"
+                    class="link-highlight"
                     class:font-bold={$page.url.pathname.startsWith('/blog')}
                 >blog</a>
             </div>
@@ -26,7 +26,7 @@
             <div class="w-[3.5rem] text-center">
                 <a 
                     href="{base}/resume" 
-                    class="text-blue-700 hover:underline transition duration-300"
+                    class="link-highlight"
                     class:font-bold={$page.url.pathname === '/resume'}
                 >resume</a>
             </div>

@@ -17,7 +17,7 @@
 </head>
 
 <main>
-  <p class="font-serif text-base text-left mt-8">
+  <p class="font-serif text-base text-left mt-12">
     I'm currently a student at the USC studying Computer Science. 
   </p>
 
@@ -28,7 +28,7 @@
         <i class="fab fa-github text-blue-700 mr-2"></i>
         <a
           href="https://github.com/kyle-he"
-          class="text-blue-700 hover:underline transition duration-300"
+          class="link-highlight"
           >github (kyle-he)</a
         >
       </li>
@@ -36,7 +36,7 @@
         <i class="fab fa-linkedin text-blue-700 mr-2"></i>
         <a
           href="https://linkedin.com/in/kyle-he"
-          class="text-blue-700 hover:underline transition duration-300"
+          class="link-highlight"
           >linkedin (kyle-he)</a
         >
       </li>
@@ -49,7 +49,7 @@
       Email:
       <a
         href="mailto:kphe@usc.edu?body=Hi%20Kyle%2C%0A"
-        class="text-blue-700 hover:underline transition duration-300"
+        class="link-highlight"
       >
         kphe@usc.edu
       </a>

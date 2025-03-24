@@ -30,26 +30,19 @@
 }} />
 
 <main>
-    <article class="font-serif mt-12">        
-        <div class="mt-4 pl-4 border-l-2 border-gray-200 py-3 bg-gray-50/50">
-            <div class="text-gray-600">
-                Under construction
-            </div>
-        </div>
-    </article>
-    <div class="mt-8">
+    <div class="mt-12">
         {#each posts as post}
-            <article class="font-serif mt-8 pb-8 border-b border-gray-200">
-                <h2 class="text-2xl font-semibold">
-                    <a href="{base}/blog/{post.slug}" class="text-blue-700 hover:underline transition duration-300">
+            <article class="mt-8 pb-8 border-b border-gray-200">
+                <h2 class="font-serif text-2xl font-semibold">
+                    <a href="{base}/blog/{post.slug}" class="link-highlight">
                         {post.metadata.title}
                     </a>
                 </h2>
-                <div class="text-sm mt-2 text-gray-600">
+                <div class="font-serif text-sm mt-2 text-gray-600">
                     {formatDate(post.metadata.date)}
                 </div>
                 {#if post.metadata.description}
-                    <p class="mt-4 text-gray-700">{post.metadata.description}</p>
+                    <p class="font-serif mt-4 text-gray-700">{post.metadata.description}</p>
                 {/if}
             </article>
         {/each}

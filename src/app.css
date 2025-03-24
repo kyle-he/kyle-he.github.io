@@ -2,21 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+    .link-highlight {
+        @apply text-blue-700 hover:text-blue-900 transition-colors duration-100;
+    }
+}
+
 /* Markdown styles that match the site's design */
 .markdown {
     @apply font-serif text-base;
 }
 
 .markdown h1 {
-    @apply text-2xl font-bold mt-8 mb-4;
+    @apply text-2xl font-bold mt-8 mb-4 font-serif;
 }
 
 .markdown h2 {
-    @apply text-xl font-semibold mt-8 mb-4;
+    @apply text-xl font-semibold mt-8 mb-4 font-serif;
 }
 
 .markdown h3 {
-    @apply text-lg font-semibold mt-6 mb-3;
+    @apply text-lg font-semibold mt-6 mb-3 font-serif;
 }
 
 .markdown p {
@@ -44,7 +50,7 @@
 }
 
 .markdown a {
-    @apply text-blue-700 hover:underline transition duration-300;
+    @apply link-highlight;
 }
 
 .markdown blockquote {
