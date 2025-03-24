@@ -46,7 +46,7 @@
         </ul>
     </section>
 
-    <section class="mt-8">
+    <section class="mt-8 mb-24">
         <h2 class="font-serif text-2xl font-semibold">Experience</h2>
         <div class="mt-4 font-serif">
             <div class="mb-4">

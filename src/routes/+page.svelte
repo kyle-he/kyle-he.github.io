@@ -9,13 +9,6 @@
   }}
 />
 
-<head>
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-  />
-</head>
-
 <main>
   <p class="font-serif text-base text-left mt-12">
     I'm currently a student at the USC studying Computer Science. 

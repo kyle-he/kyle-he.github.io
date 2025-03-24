@@ -4,12 +4,12 @@
     import { base } from '$app/paths';
 </script>
 
-<head>
+<svelte:head>
   <link
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
   />
-</head>
+</svelte:head>
 
 <div class="container mx-auto max-w-3xl p-4">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between mt-8 gap-4 sm:gap-0">
