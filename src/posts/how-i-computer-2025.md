@@ -74,6 +74,4 @@ Recently, I started using [Nix Darwin](https://github.com/LnL7/nix-darwin) to ma
 I also started [versioning my dotfiles](https://github.com/kyle-he/dotfiles) and managing the symlinks using `stow` and it's been pretty nice so far.
 
 ## Conclusion
-My setup is honestly one of the most basic setups out there--most of the apps and software I use are incredibly popular, and for good reason. Overall, I think being intentional about setting up my computer from the get-go this time around made life a lot easier.
-
-One of my biggest annoyances on my old device was dealing with multiple different installations of everything, having to wade through them whenever I ran into version issues. Using software like Nix and being more careful about my setup this time has made me feel a lot more confident about my system.
+My setup is pretty basic, but it works for me. One of my biggest annoyances on my old device was dealing with multiple different installations of everything, having to wade through them whenever I ran into version issues. Using software like Nix and being more careful about my setup this time has made me feel a lot more confident about my system.
