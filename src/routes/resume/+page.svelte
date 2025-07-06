@@ -51,15 +51,15 @@
         <div class="mt-4 font-serif">
             <div class="mb-4">
                 <p class="font-semibold">SWE Intern @ Meta</p>
-                <p class="text-gray-600">June 2026 - August 2026<i class="fas fa-circle text-[4px] mx-2 align-middle"></i>New York City, NY</p>
+                <p class="text-gray-600">June 2025 - August 2025<i class="fas fa-circle text-[4px] mx-2 align-middle"></i>New York City, NY</p>
                 <ul class="list-disc ml-6 mt-2">
-                    <li>TBD</li>
+                    <li>Worked on Instagram's ML Infra</li>
                 </ul>
             </div>
 
             <div class="mb-4">
                 <p class="font-semibold">SWE Intern @ Bloomberg</p>
-                <p class="text-gray-600">June 2025 - August 2025<i class="fas fa-circle text-[4px] mx-2 align-middle"></i>New York City, NY</p>
+                <p class="text-gray-600">June 2024 - August 2024<i class="fas fa-circle text-[4px] mx-2 align-middle"></i>New York City, NY</p>
                 <ul class="list-disc ml-6 mt-2">
                     <li>Wrote C++ for Bloomberg's market data pipelines.</li>
                 </ul>
@@ -67,7 +67,7 @@
 
             <div class="mb-4">
                 <p class="font-semibold">SWE Intern @ VMware</p>
-                <p class="text-gray-600">June 2025 - August 2025<i class="fas fa-circle text-[4px] mx-2 align-middle"></i>Remote</p>
+                <p class="text-gray-600">June 2023 - August 2023<i class="fas fa-circle text-[4px] mx-2 align-middle"></i>Remote</p>
                 <ul class="list-disc ml-6 mt-2">
                     <li>Built some ML models to identify duplicate bug reports.</li>
                 </ul>
