@@ -61,15 +61,15 @@
                 <p class="font-semibold">SWE Intern @ Bloomberg</p>
                 <p class="text-gray-600">June 2024 - August 2024<i class="fas fa-circle text-[4px] mx-2 align-middle"></i>New York City, NY</p>
                 <ul class="list-disc ml-6 mt-2">
-                    <li>Wrote C++ for Bloomberg's market data pipelines.</li>
+                    <li>Wrote C++ for Bloomberg's market data pipelines</li>
                 </ul>
             </div>
 
-            <div class="mb-4">
+            <div class="mb-4"> d
                 <p class="font-semibold">SWE Intern @ VMware</p>
                 <p class="text-gray-600">June 2023 - August 2023<i class="fas fa-circle text-[4px] mx-2 align-middle"></i>Remote</p>
                 <ul class="list-disc ml-6 mt-2">
-                    <li>Built some ML models to identify duplicate bug reports.</li>
+                    <li>Built some ML models to identify duplicate bug reports</li>
                 </ul>
             </div>
         </div>
