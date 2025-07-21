@@ -53,7 +53,7 @@
                 <p class="font-semibold">SWE Intern @ Meta</p>
                 <p class="text-gray-600">June 2025 - August 2025<i class="fas fa-circle text-[4px] mx-2 align-middle"></i>New York City, NY</p>
                 <ul class="list-disc ml-6 mt-2">
-                    <li>Worked on Instagram's ML Infra</li>
+                    <li>Working on Instagram ML Infrastructure (Reels, Feed, Explore, etc)</li>
                 </ul>
             </div>
 

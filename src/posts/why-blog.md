@@ -1,14 +1,14 @@
 ---
 title: Hello World
 date: '2025-03-21'
-description: how i built this website & why
+description: hello hello hello hello hello hello hello
 publish: True
 ---
 
-I recently read a blog post, [Why You Should Start a Blog Right Now](https://guzey.com/personal/why-have-a-blog/), and I thought it gave some pretty compelling reasons to start a blog. A few points that stood out to me were "writing helps you think better" and "there is value in unoriginal writing." 
+I recently came across a blog post titled [Why You Should Start a Blog Right Now](https://guzey.com/personal/why-have-a-blog/). It presented some compelling reasons to begin blogging. Two points that particularly resonated with me were: "writing helps you think better" and "there is value in unoriginal writing."
 
-I wanted to additionally add a few of my reasons for starting this:
+Also, I wanted to additionally add a few of my reasons for starting a place to publish and store writing:
 
-a. With large language models getting better, I realized that I've been forming original thoughts and producing original writing a lot less, which is quite sad. I think I want to write/think more. 
+1. With large language models getting better, I realized that I've been thinking a lot less, which is quite sad. 
 
-b. I think I tend to BFS-think a lot—-I have a bunch of random ideas that need a lot more development before it becomes a cohesive thought. I want to think a bit more deeply about these BFS-thoughts, and I think using a blog format would help with that. 
+2. On a related note: I tend to BFS-think a lot, and I think the act of writing out my thoughts will help me better crystallize my ideas. 

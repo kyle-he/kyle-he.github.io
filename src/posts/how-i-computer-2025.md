@@ -40,7 +40,7 @@ It's lowkey super jank though, and I only really use this when I have to send a 
 I've been using [Arc](https://arc.net/) for around a year now, and I have a love-hate relationship with it. On one hand, it makes managing tabs much easier, and feels a lot more responsive than Chrome. On the other hand, it's been getting a lot buggier--some tabs won't close, the new tab prompt would autocomplete for me instead of searching, things like that. I think this is because the team at The Browser Company are planning on EOL'ing it, instead making an AI-first browser from the ground up instead. I'm not sure how I feel about that, and it makes me a bit sad.
 
 ### Development
-I use [Cursor](https://www.cursor.com/en) as my main IDE, and I like it a lot so far! I rarely pay for software, so it's pretty high praise that they were able to convince me to shell out $20/month. I actually had it installed back in 2023 when it first came out, but stopped using it because a lot of things failed to work. However, over the past year, they have really stepped up their game: Tab and Agent actually works!
+I use [Cursor](https://www.cursor.com/en) as my main IDE, and I like it a lot so far! I rarely pay for software, so it's pretty high praise that they were able to convince me to shell out $20/month. I actually had it installed back in 2023 when it first came out, but stopped using it because it didn't seem particularly helpful or useful. However, over the past year, they have really stepped up their game: Tab and Agent actually work!
 
 I use [iTerm2](https://iterm2.com/) as my terminal emulator.
 

@@ -11,6 +11,3 @@ While I tend to be pretty easy to please, I truly believe that this is Adult Swi
 
 To preface, I don't watch a lot of cartoons. And based on my conversations with my friends, I feel like a lot of people
 are really put off by the medium, which I totally understand. 
-
-### A Brief (Spoiler Free) Summary
-Common Side Effects 

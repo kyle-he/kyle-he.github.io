@@ -94,11 +94,11 @@
     }
 
     :global(.markdown ul) {
-        @apply my-4 list-disc pl-6;
+        @apply my-4 list-disc;
     }
 
     :global(.markdown ol) {
-        @apply my-4 list-decimal pl-6;
+        @apply my-4 list-decimal;
     }
 
     :global(.markdown li) {
