@@ -65,7 +65,7 @@
                 </ul>
             </div>
 
-            <div class="mb-4"> d
+            <div class="mb-4">
                 <p class="font-semibold">SWE Intern @ VMware</p>
                 <p class="text-gray-600">June 2023 - August 2023<i class="fas fa-circle text-[4px] mx-2 align-middle"></i>Remote</p>
                 <ul class="list-disc ml-6 mt-2">
