@@ -33,6 +33,30 @@
           >linkedin (kyle-he)</a
         >
       </li>
+      <li class="mt-2 flex items-center">
+        <i class="fab fa-instagram text-blue-700 mr-2"></i>
+        <a
+          href="https://instagram.com/keelay.he"
+          class="link-highlight"
+          >instagram (keelay.he)</a
+        >
+      </li>
+      <li class="mt-2 flex items-center">
+        <i class="fas fa-utensils text-blue-700 mr-2"></i>
+        <a
+          href="https://beliapp.co/app/keelay"
+          class="link-highlight"
+          >beli (keelay)</a
+        >
+      </li>
+      <li class="mt-2 flex items-center">
+        <i class="fab fa-spotify text-blue-700 mr-2"></i>
+        <a
+          href="https://open.spotify.com/user/12147947115?si=68e0208a1bee4749"
+          class="link-highlight"
+          >spotify (kyle he)</a
+        >
+      </li>
     </ul>
   </section>
 
