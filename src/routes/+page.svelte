@@ -1,7 +1,7 @@
 <script>
   import Metadata from "$lib/components/Metadata.svelte";
+  import { base } from '$app/paths';
   
-  // Map icon filenames to their links
   const friendIcons = [
     { file: 'oliver.png', url: 'https://oliver.ni/' },
     { file: 'albert.png', url: 'https://tam-albert.github.io/' },
@@ -74,7 +74,7 @@
       {#each friendIcons as icon}
         <a href={icon.url} target="_blank" rel="noopener noreferrer">
           <img 
-            src="/friends/{icon.file}" 
+            src="{base}/friends/{icon.file}" 
             alt="{icon.file}" 
             class="w-[88px] h-[31px] pixelated"
             loading="lazy"
