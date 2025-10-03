@@ -6,6 +6,13 @@
     .link-highlight {
         @apply text-blue-700 hover:text-blue-900 transition-colors duration-100;
     }
+    
+    .pixelated {
+        image-rendering: -moz-crisp-edges;
+        image-rendering: -webkit-crisp-edges;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+    }
 }
 
 /* Markdown styles that match the site's design */

@@ -1,5 +1,13 @@
 <script>
   import Metadata from "$lib/components/Metadata.svelte";
+  
+  // Map icon filenames to their links
+  const friendIcons = [
+    { file: 'oliver.png', url: 'https://oliver.ni/' },
+    { file: 'albert.png', url: 'https://tam-albert.github.io/' },
+    { file: 'sabrina.gif', url: 'https://sabpdo.github.io/' },
+    { file: 'apple.gif', url: 'https://apple.com/' }
+  ];
 </script>
 
 <Metadata
@@ -58,6 +66,25 @@
         >
       </li>
     </ul>
+  </section>
+
+  <section class="mt-8">
+    <h2 class="font-serif text-2xl font-semibold text-left">Friends</h2>
+    <div class="mt-4 flex flex-wrap gap-2">
+      {#each friendIcons as icon}
+        <a href={icon.url} target="_blank" rel="noopener noreferrer">
+          <img 
+            src="/friends/{icon.file}" 
+            alt="{icon.file}" 
+            class="w-[88px] h-[31px] pixelated"
+            loading="lazy"
+          />
+        </a>
+      {/each}
+      {#if friendIcons.length === 0}
+        <p class="font-serif text-sm text-gray-600 italic">No friend icons yet - add some 88x31 icons to the /static/friends/ folder!</p>
+      {/if}
+    </div>
   </section>
 
   <section class="mt-8">
