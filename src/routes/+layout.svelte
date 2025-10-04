@@ -11,7 +11,7 @@
   />
 </svelte:head>
 
-<div class="container mx-auto max-w-3xl p-4">
+<div class="container mx-auto max-w-2xl p-4">
     <div class="flex items-start min-[480px]:items-center justify-between mt-8">
         <a href="{base}/" class="font-serif text-3xl font-semibold">Kyle He</a>
         <nav class="font-serif text-base flex flex-col min-[480px]:flex-row items-end min-[480px]:items-center">

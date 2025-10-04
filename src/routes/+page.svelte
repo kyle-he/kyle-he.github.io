@@ -1,25 +1,39 @@
 <script>
   import Metadata from "$lib/components/Metadata.svelte";
-  import { base } from '$app/paths';
-  
+  import { base } from "$app/paths";
+
   const friendIcons = [
-    { file: 'oliver.png', url: 'https://oliver.ni/' },
-    { file: 'albert.png', url: 'https://tam-albert.github.io/' },
-    { file: 'sabrina.gif', url: 'https://sabpdo.github.io/' },
-    { file: 'apple.gif', url: 'https://apple.com/' }
+    { file: "oliver.png", url: "https://oliver.ni/" },
+    { file: "albert.png", url: "https://tam-albert.github.io/" },
+    { file: "sabrina.gif", url: "https://sabpdo.github.io/" },
+    { file: "apple.gif", url: "https://apple.com/" },
   ];
+
+  // Calculate exact age in years since November 7, 2004 in Mountain View (PST/PDT)
+  function calculateAgeInYears() {
+    const birthDate = new Date("2004-11-07T00:00:00-08:00"); // Mountain View timezone (PST)
+    const now = new Date();
+    const diffInMs = now - birthDate;
+    const diffInYears = diffInMs / (1000 * 60 * 60 * 24 * 365.25); // Account for leap years
+    return diffInYears.toFixed(5);
+  }
+
+  const ageInYears = calculateAgeInYears();
 </script>
 
 <Metadata
   meta={{
-      title: "Kyle He",
-      description: "Kyle He's personal website",
+    title: "Kyle He",
+    description: "Kyle He's personal website",
   }}
 />
 
 <main>
   <p class="font-serif text-base text-left mt-12">
-    I'm currently a student at the USC studying Computer Science. 
+    Hello! I'm <span class="font-mono text-sm" >{ageInYears}</span> years old and I live in
+    Los Angeles, where I am studying Computer Science at USC. Previously, I have
+    lived in San Jose (hometown), New York City (two summers), and Shanghai (until
+    I was ~5).
   </p>
 
   <section class="mt-8">
@@ -27,33 +41,25 @@
     <ul class="font-serif text-base text-left mt-4">
       <li class="mt-2 flex items-center">
         <i class="fab fa-github text-blue-700 mr-2"></i>
-        <a
-          href="https://github.com/kyle-he"
-          class="link-highlight"
+        <a href="https://github.com/kyle-he" class="link-highlight"
           >github (kyle-he)</a
         >
       </li>
       <li class="mt-2 flex items-center">
         <i class="fab fa-linkedin text-blue-700 mr-2"></i>
-        <a
-          href="https://linkedin.com/in/kyle-he"
-          class="link-highlight"
+        <a href="https://linkedin.com/in/kyle-he" class="link-highlight"
           >linkedin (kyle-he)</a
         >
       </li>
       <li class="mt-2 flex items-center">
         <i class="fab fa-instagram text-blue-700 mr-2"></i>
-        <a
-          href="https://instagram.com/keelay.he"
-          class="link-highlight"
+        <a href="https://instagram.com/keelay.he" class="link-highlight"
           >instagram (keelay.he)</a
         >
       </li>
       <li class="mt-2 flex items-center">
         <i class="fas fa-utensils text-blue-700 mr-2"></i>
-        <a
-          href="https://beliapp.co/app/keelay"
-          class="link-highlight"
+        <a href="https://beliapp.co/app/keelay" class="link-highlight"
           >beli (keelay)</a
         >
       </li>
@@ -61,8 +67,7 @@
         <i class="fab fa-spotify text-blue-700 mr-2"></i>
         <a
           href="https://open.spotify.com/user/12147947115?si=68e0208a1bee4749"
-          class="link-highlight"
-          >spotify (kyle he)</a
+          class="link-highlight">spotify (kyle he)</a
         >
       </li>
     </ul>
@@ -73,16 +78,19 @@
     <div class="mt-4 flex flex-wrap gap-2">
       {#each friendIcons as icon}
         <a href={icon.url} target="_blank" rel="noopener noreferrer">
-          <img 
-            src="{base}/friends/{icon.file}" 
-            alt="{icon.file}" 
+          <img
+            src="{base}/friends/{icon.file}"
+            alt={icon.file}
             class="w-[88px] h-[31px] pixelated"
             loading="lazy"
           />
         </a>
       {/each}
       {#if friendIcons.length === 0}
-        <p class="font-serif text-sm text-gray-600 italic">No friend icons yet - add some 88x31 icons to the /static/friends/ folder!</p>
+        <p class="font-serif text-sm text-gray-600 italic">
+          No friend icons yet - add some 88x31 icons to the /static/friends/
+          folder!
+        </p>
       {/if}
     </div>
   </section>
@@ -91,10 +99,7 @@
     <h2 class="font-serif text-2xl font-semibold text-left">Contact</h2>
     <p class="font-serif text-base text-left mt-4">
       Email:
-      <a
-        href="mailto:kphe@usc.edu?body=Hi%20Kyle%2C%0A"
-        class="link-highlight"
-      >
+      <a href="mailto:kphe@usc.edu?body=Hi%20Kyle%2C%0A" class="link-highlight">
         kphe@usc.edu
       </a>
     </p>
