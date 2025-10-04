@@ -7,7 +7,7 @@ publish: True
 
 I recently came across a blog post titled [Why You Should Start a Blog Right Now](https://guzey.com/personal/why-have-a-blog/). It presented some compelling reasons to begin blogging. Two points that particularly resonated with me were: "writing helps you think better" and "there is value in unoriginal writing."
 
-Also, I wanted to additionally add a few of my reasons for starting a place to publish and store writing:
+Also, more personally:
 
 1. With large language models getting better, I realized that I've been thinking a lot less, which is quite sad. 
 
