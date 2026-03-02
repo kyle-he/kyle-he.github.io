@@ -20,6 +20,7 @@
      * @property {number} id
      * @property {string} createdAt
      * @property {string} text
+     * @property {1 | 2 | 3} textSizeLines
      * @property {StickerInstance[]} stickers
      * @property {number} deckRotation
      * @property {number} deckOffsetX
@@ -92,6 +93,7 @@
             id: 0,
             createdAt: todayString,
             text: "",
+            textSizeLines: 1,
             stickers: [],
             deckRotation: 0,
             deckOffsetX: 0,
@@ -103,6 +105,7 @@
     /** @type {Note} */
     let currentNote = createEmptyNote();
     let lastValidText = currentNote.text;
+    let lastValidTextSizeLines = currentNote.textSizeLines;
 
     /** @type {Note[]} */
     let publishedNotes = [];
@@ -462,10 +465,34 @@
     }
 
     const LINE_SCALE = { 1: 2, 2: 1.5, 3: 1 };
+    const MAX_TEXT_LINES = 3;
 
     function applyTextSize(el, lines) {
         const scale = LINE_SCALE[lines] || 1;
         el.style.fontSize = `${4.4 * scale}cqi`;
+    }
+
+    function getVisualLineCount(el) {
+        const style = getComputedStyle(el);
+        const lineHeight = parseFloat(style.lineHeight || "0");
+        if (!lineHeight) return 1;
+        // round is less jumpy at wrap thresholds than ceil for textarea metrics
+        return Math.max(1, Math.round(el.scrollHeight / lineHeight));
+    }
+
+    function pickBestTextSize(el) {
+        for (const targetLines of [1, 2, 3]) {
+            applyTextSize(el, targetLines);
+            el.style.height = "auto";
+            const visualLines = getVisualLineCount(el);
+            if (visualLines <= targetLines) {
+                return { targetLines, visualLines };
+            }
+        }
+
+        applyTextSize(el, MAX_TEXT_LINES);
+        el.style.height = "auto";
+        return { targetLines: MAX_TEXT_LINES, visualLines: getVisualLineCount(el) };
     }
 
     function handleTextInput(event) {
@@ -473,27 +500,19 @@
         const value = el.value;
         currentNote = { ...currentNote, text: value };
 
-        applyTextSize(el, 3);
-        el.style.height = "auto";
-        const style = getComputedStyle(el);
-        const lineHeight = parseFloat(style.lineHeight || "0");
-        const maxLines = 3;
-        const lines = lineHeight ? Math.round(el.scrollHeight / lineHeight) : 1;
+        let result = pickBestTextSize(el);
 
-        if (lines > maxLines) {
-            currentNote = { ...currentNote, text: lastValidText };
+        if (result.visualLines > MAX_TEXT_LINES) {
+            currentNote = { ...currentNote, text: lastValidText, textSizeLines: lastValidTextSizeLines };
             el.value = lastValidText;
-            applyTextSize(el, 3);
-            el.style.height = "auto";
-            const recount = lineHeight ? Math.round(el.scrollHeight / lineHeight) : 1;
-            applyTextSize(el, Math.min(recount, maxLines));
-            el.style.height = "auto";
-            el.style.height = `${el.scrollHeight}px`;
-            return;
+            result = pickBestTextSize(el);
+        } else {
+            lastValidText = value;
+            lastValidTextSizeLines = result.targetLines;
+            currentNote = { ...currentNote, textSizeLines: result.targetLines };
         }
 
-        lastValidText = value;
-        applyTextSize(el, Math.min(lines, maxLines));
+        applyTextSize(el, result.targetLines);
         el.style.height = "auto";
         el.style.height = `${el.scrollHeight}px`;
     }
@@ -513,6 +532,8 @@
         };
         publishedNotes = [noteToAdd, ...publishedNotes];
         currentNote = createEmptyNote();
+        lastValidText = currentNote.text;
+        lastValidTextSizeLines = currentNote.textSizeLines;
         selectedStickerId = null;
     }
 
@@ -663,8 +684,7 @@
 
                             <svelte:fragment slot="footer">
                                 {#if note.text.trim().length}
-                                    {@const lineCount = Math.min(note.text.split('\n').length, 3)}
-                                    <p class="deck-text deck-text-{lineCount}l">{note.text}</p>
+                                    <p class="deck-text deck-text-{note.textSizeLines || 3}l">{note.text}</p>
                                 {/if}
                             </svelte:fragment>
                         </PolaroidCard>
