@@ -21,9 +21,19 @@
     <p class="font-serif text-base text-left mt-12">tbd</p>
 
     <section class="mt-8">
-        <h2 class="font-serif text-2xl font-semibold text-left">
-            # vibe coding
-        </h2>
+        <h2 class="font-serif text-2xl font-semibold text-left">this is me (circa summer 2024)</h2>
+
+        <img
+            src="{base}/images/selfie.jpeg"
+            alt="selfie"
+            style="border: 2px solid black; border-radius: 0; display: block; width: 100%; max-width: 400px;"
+            class="mt-4"
+        />
+    </section>
+
+    <section class="mt-8">
+        <h2 class="font-serif text-2xl font-semibold text-left">fun</h2>
+
         <p class="font-serif text-base text-left mt-4">
             <a
                 href="https://rank.kylehe.com"
@@ -33,7 +43,7 @@
             >
                 rank.kylehe.com
             </a>
-            - rank anything beli style
+            - rank anything beli style (+ share with friends and vote)
         </p>
 
         <p class="font-serif text-base text-left mt-4">
@@ -47,20 +57,29 @@
             </a>
             - aaronson oracle but with three buttons
         </p>
-        
     </section>
 
     <section class="mt-8">
         <h2 class="font-serif text-2xl font-semibold text-left">
-            gaming
+            gaming deving
         </h2>
         <p class="font-serif text-base text-left mt-4">
-            <a href="https://keeelay.itch.io/the-lost-soul" target="_blank" rel="noopener noreferrer" class="link-highlight">
+            <a
+                href="https://keeelay.itch.io/the-lost-soul"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="link-highlight"
+            >
                 2021 - The Lost Soul
             </a>
         </p>
         <p class="font-serif text-base text-left mt-4">
-            <a href="https://keeelay.itch.io/unus-motus" target="_blank" rel="noopener noreferrer" class="link-highlight">
+            <a
+                href="https://keeelay.itch.io/unus-motus"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="link-highlight"
+            >
                 2020 - Unus Motus
             </a>
         </p>
