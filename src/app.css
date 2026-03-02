@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+    font-family: "KyleHandwriting";
+    src: url("/fonts/kyle_handwriting.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "HelveticaCondensed";
+    src: url("/fonts/Helvetica_LT_Std_Condensed.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
 @layer components {
     .link-highlight {
         @apply text-blue-700 hover:text-blue-900 transition-colors duration-100;
