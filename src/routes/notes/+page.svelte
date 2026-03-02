@@ -646,7 +646,7 @@
     <div class="publish-row">
         <button
             type="button"
-            class="publish-button font-serif"
+            class="publish-button"
             on:click={publishNote}
             disabled={!canPublish}
         >
@@ -852,27 +852,34 @@
 
     .publish-button {
         min-width: 160px;
-        padding: 0.6rem 1.4rem;
+        padding: 0.7rem 1.4rem 0.5rem;
         border-radius: 999px;
         border: 2px solid #222;
         background: #fdf4dc;
-        font-size: 0.95rem;
+        font-family: "KyleHandwriting", ui-serif, system-ui;
+        font-size: 1.5rem;
         text-transform: lowercase;
-        box-shadow: 3px 3px 0 #222;
+        box-shadow: 0px 4px 0 #222;
         cursor: pointer;
         transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease, opacity 120ms ease;
     }
 
     .publish-button:hover:enabled {
         transform: translateY(-1px);
-        box-shadow: 4px 4px 0 #222;
+        box-shadow: 0px 8px 0 #222;
         background-color: #ffeec0;
+    }
+
+    .publish-button:active:enabled {
+        transform: translateY(2px);
+        box-shadow: 0px 2px 0 #222;
+        background-color: #ffe3a0;
     }
 
     .publish-button:disabled {
         opacity: 0.5;
         cursor: default;
-        box-shadow: 1px 1px 0 #222;
+        box-shadow: 0px 4px 0 #222;
     }
 
     /* --- deck --- */
