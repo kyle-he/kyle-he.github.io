@@ -19,7 +19,7 @@ in no particular order and some less niche than others:
 - posting aesthetic stories on instagram for attention
 - falling snow
 - snow on a sunny day
-- lukewarm rain but the sky is orange when im in a good mood
+- lukewarm rain when the sky is orange and i'm in a good mood
 - new york city in good weather
 - new york city in bad weather (but not as much)
 - pickleball
