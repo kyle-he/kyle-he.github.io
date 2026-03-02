@@ -328,7 +328,16 @@
             const [aLx, aLy] = getAnchorLocal(h, Math.abs(spw) / 2, Math.abs(sph) / 2);
             const aW = rotatePoint(aLx, aLy, rot);
             const [naLx, naLy] = getAnchorLocal(h, Math.abs(npw) / 2, Math.abs(nph) / 2);
-            const naW = rotatePoint(naLx, naLy, rot);
+            // When a dimension crosses zero the anchor must flip to the other side
+            const xFlipped = (Math.sign(spw) || 1) !== (Math.sign(npw) || 1);
+            const yFlipped = (Math.sign(sph) || 1) !== (Math.sign(nph) || 1);
+            const affectsX = h !== 't' && h !== 'b';
+            const affectsY = h !== 'l' && h !== 'r';
+            const naW = rotatePoint(
+                (affectsX && xFlipped) ? -naLx : naLx,
+                (affectsY && yFlipped) ? -naLy : naLy,
+                rot
+            );
 
             const ncx = scx + aW.x - naW.x;
             const ncy = scy + aW.y - naW.y;
@@ -452,11 +461,20 @@
         }
     }
 
+    const LINE_SCALE = { 1: 2, 2: 1.5, 3: 1 };
+
+    function applyTextSize(el, lines) {
+        const scale = LINE_SCALE[lines] || 1;
+        el.style.fontSize = `${4.4 * scale}cqi`;
+    }
+
     function handleTextInput(event) {
         const el = event.target;
         const value = el.value;
         currentNote = { ...currentNote, text: value };
 
+        applyTextSize(el, 3);
+        el.style.height = "auto";
         const style = getComputedStyle(el);
         const lineHeight = parseFloat(style.lineHeight || "0");
         const maxLines = 3;
@@ -465,25 +483,32 @@
         if (lines > maxLines) {
             currentNote = { ...currentNote, text: lastValidText };
             el.value = lastValidText;
+            applyTextSize(el, 3);
+            el.style.height = "auto";
+            const recount = lineHeight ? Math.round(el.scrollHeight / lineHeight) : 1;
+            applyTextSize(el, Math.min(recount, maxLines));
+            el.style.height = "auto";
+            el.style.height = `${el.scrollHeight}px`;
             return;
         }
 
         lastValidText = value;
+        applyTextSize(el, Math.min(lines, maxLines));
+        el.style.height = "auto";
+        el.style.height = `${el.scrollHeight}px`;
     }
 
-    function canPublish() {
-        return currentNote.text.trim().length > 0 || currentNote.stickers.length > 0;
-    }
+    $: canPublish = currentNote.text.trim().length > 0 || currentNote.stickers.length > 0;
 
     function publishNote() {
-        if (!canPublish()) return;
+        if (!canPublish) return;
         const noteToAdd = {
             ...currentNote,
             id: nextNoteId++,
             createdAt: todayString,
             stickers: currentNote.stickers.map((s) => ({ ...s })),
             deckRotation: Math.random() * 30 - 15,
-            deckOffsetX: Math.random() * 40 - 20,
+            deckOffsetX: Math.random() * 20 - 10,
             deckOffsetY: Math.random() * 20 - 10
         };
         publishedNotes = [noteToAdd, ...publishedNotes];
@@ -493,7 +518,7 @@
 
     const RESIZE_HANDLES = ["tl", "tr", "bl", "br", "l", "r", "t", "b"];
     const ROTATE_CORNERS = ["tl", "tr", "bl", "br"];
-    const ROTATE_CORNER_BASE = { tl: 135, tr: 225, bl: 45, br: 315 };
+    const ROTATE_CORNER_BASE = { tl: 315, tr: 45, bl: 225, br: 135 };
 
     onMount(() => {
         if (typeof window === "undefined") return;
@@ -585,7 +610,7 @@
                 <svelte:fragment slot="footer">
                     <textarea
                         class="note-text font-serif"
-                        rows="3"
+                        rows="1"
                         placeholder="leave a note"
                         value={currentNote.text}
                         on:input={handleTextInput}
@@ -602,7 +627,7 @@
             type="button"
             class="publish-button font-serif"
             on:click={publishNote}
-            disabled={!canPublish()}
+            disabled={!canPublish}
         >
             publish
         </button>
@@ -616,7 +641,7 @@
                 {#each publishedNotes as note (note.id)}
                     <article
                         class="deck-card"
-                        style={`transform: translate(${note.deckOffsetX}px, ${note.deckOffsetY}px) rotate(${note.deckRotation}deg);`}
+                        style={`--dx:${note.deckOffsetX}px;--dy:${note.deckOffsetY}px;--rot:${note.deckRotation}deg;`}
                     >
                         <PolaroidCard date={note.createdAt} backgroundUrl={note.backgroundUrl} mini>
                             <svelte:fragment slot="canvas">
@@ -638,7 +663,8 @@
 
                             <svelte:fragment slot="footer">
                                 {#if note.text.trim().length}
-                                    <p class="deck-text">{note.text}</p>
+                                    {@const lineCount = Math.min(note.text.split('\n').length, 3)}
+                                    <p class="deck-text deck-text-{lineCount}l">{note.text}</p>
                                 {/if}
                             </svelte:fragment>
                         </PolaroidCard>
@@ -683,10 +709,14 @@
         font-size: 4.4cqi;
         line-height: 1.1;
         overflow: hidden;
+        padding: 0;
+        margin: 0;
+        box-sizing: border-box;
+        word-break: break-word;
     }
 
     .note-text::placeholder {
-        color: #b0aca1;
+        color: #7e776d;
     }
 
     /* --- sticker interaction layer --- */
@@ -835,21 +865,26 @@
     .deck-grid {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.75rem;
         margin-top: 0.75rem;
+        margin-left: 0.5rem;
     }
 
     .deck-card {
         width: 150px;
         aspect-ratio: 657 / 794;
         cursor: pointer;
-        transition: transform 160ms ease, box-shadow 160ms ease, z-index 160ms ease;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+        transition: transform 160ms ease, filter 160ms ease;
+        position: relative;
+        margin-left: -2.25rem;
+        margin-bottom: -1.5rem;
+        transform: translate(var(--dx, 0), var(--dy, 0)) rotate(var(--rot, 0deg));
     }
 
     .deck-card:hover {
-        transform: translate(0, 0) rotate(0deg) scale(1.05);
-        box-shadow: 4px 4px 0 #222;
-        z-index: 10;
+        transform: translate(0, 0) rotate(0deg) scale(1.08);
+        filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.4));
+        z-index: 20;
     }
 
     .deck-sticker {
@@ -868,13 +903,20 @@
         font-family: "KyleHandwriting", ui-serif, system-ui;
         font-size: 4.4cqi;
         line-height: 1.1;
-        max-height: 8.3cqi;
         overflow: hidden;
         display: -webkit-box;
         -webkit-line-clamp: 3;
         -webkit-box-orient: vertical;
         line-clamp: 3;
+        margin: 0;
+        padding: 0;
+        word-break: break-word;
+        white-space: pre-wrap;
     }
+
+    .deck-text-1l { font-size: 8.8cqi; }
+    .deck-text-2l { font-size: 6.6cqi; }
+    .deck-text-3l { font-size: 4.4cqi; }
 
     :global(.palette-drag-ghost) {
         position: fixed;
