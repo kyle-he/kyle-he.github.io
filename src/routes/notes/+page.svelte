@@ -3,6 +3,9 @@
     import PolaroidCard from "$lib/components/notes/PolaroidCard.svelte";
     import StickerPalette from "$lib/components/notes/StickerPalette.svelte";
     import { onMount, onDestroy } from "svelte";
+    import { afterNavigate } from "$app/navigation";
+    import { fetchNotes, saveNote } from "$lib/services/notes.js";
+    import { base } from "$app/paths";
 
     /**
      * @typedef {Object} StickerInstance
@@ -17,7 +20,7 @@
 
     /**
      * @typedef {Object} Note
-     * @property {number} id
+     * @property {string} id
      * @property {string} createdAt
      * @property {string} text
      * @property {1 | 2 | 3} textSizeLines
@@ -27,15 +30,46 @@
      * @property {number} deckOffsetY
      */
 
-    const stickerPalette = [
-        "/images/stickers/cat_doodle.png",
-        "/images/stickers/happy_heart.png",
-        "/images/stickers/sunglasses.png",
-        "/images/stickers/drunk_dog.png"
+    const stickerPaletteSources = [
+        `${base}/images/stickers/banana.png`,
+        `${base}/images/stickers/cactus.png`,
+        `${base}/images/stickers/cactus2.png`,
+        `${base}/images/stickers/cat_doodle.png`,
+        `${base}/images/stickers/coquette.png`,
+        `${base}/images/stickers/dog.png`,
+        `${base}/images/stickers/drunk_dog.png`,
+        `${base}/images/stickers/happy_dog.png`,
+        `${base}/images/stickers/happy_heart.png`,
+        `${base}/images/stickers/mushroom.png`,
+        `${base}/images/stickers/musical_note.png`,
+        `${base}/images/stickers/snowman.png`,
+        `${base}/images/stickers/sunglasses.png`
     ];
 
+    function shuffleArray(arr) {
+        const a = [...arr];
+        for (let i = a.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+    }
+
+    function randomPalette() {
+        return shuffleArray(stickerPaletteSources).slice(0, 9);
+    }
+
+    let stickerPalette = randomPalette();
+    /** @type {null | 'out' | 'in'} */
+    let palettePhase = null;
+    let pendingPalette = null;
+
     let nextStickerId = 1;
-    let nextNoteId = 1;
+    let loadingNotes = true;
+    let loadingMore = false;
+    let hasMore = false;
+    let lastDoc = null;
+    const PAGE_SIZE = 8;
 
     const todayString = new Date().toLocaleDateString("en-US", {
         month: "2-digit",
@@ -85,7 +119,7 @@
     function randomBackgroundUrl() {
         const seed =
             Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-        return `https://picsum.photos/600/600?random=${seed}`;
+        return `https://picsum.photos/seed/${seed}/600/600`;
     }
 
     function createEmptyNote() {
@@ -102,6 +136,12 @@
         };
     }
 
+    let showBuilder = false;
+    /** @type {null | 'out' | 'in'} */
+    let publishPhase = null;
+    /** @type {Note | null} */
+    let pendingPublish = null;
+
     /** @type {Note} */
     let currentNote = createEmptyNote();
     let lastValidText = currentNote.text;
@@ -116,6 +156,7 @@
     let hoveredStickerId = null;
 
     let frameEl;
+    let noteTextEl;
     let isDragging = false;
     let dragStickerId = null;
     let dragStartClientX = 0;
@@ -142,6 +183,7 @@
     let rotateStickerStartRotation = 0;
     let rotateCenterClientX = 0;
     let rotateCenterClientY = 0;
+    let rotateCornerBase = 0;
 
     let paletteDrag = null;
     let canvasHeight = 0;
@@ -168,14 +210,25 @@
         return cursorCache.get(key);
     }
 
+    const ROTATE_CORNER_SVG = "M22.4789 9.45728L25.9935 12.9942L22.4789 16.5283V14.1032C18.126 14.1502 14.6071 17.6737 14.5675 22.0283H17.05L13.513 25.543L9.97889 22.0283H12.5674C12.6071 16.5691 17.0214 12.1503 22.4789 12.1031L22.4789 9.45728Z";
+
     function getRotateCursor(rotation) {
         const angle = Math.round(((rotation || 0) % 360 + 360) % 360);
         const key = `rot${angle}`;
         if (!cursorCache.has(key)) {
-            const d = "M10,17 A7,7 0 0,1 22,17 M13.1,14.5 L10,17 L10.8,13.1 M18.9,14.5 L22,17 L21.2,13.1";
-            const inner = `<g transform="rotate(${angle} 16 16)" fill="none" stroke-linecap="round" stroke-linejoin="round">` +
-                `<path d="${d}" stroke="white" stroke-width="4"/><path d="${d}" stroke="#222" stroke-width="1.5"/></g>`;
-            cursorCache.set(key, makeSvgCursor(inner));
+            const rad = -angle * Math.PI / 180;
+            const s = Math.sin(rad);
+            const c = Math.cos(rad);
+            const dx = (c - s).toFixed(2);
+            const dy = (s + c).toFixed(2);
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">` +
+                `<defs><filter id="shadow" y="-40%" x="-40%" width="180%" height="180%" color-interpolation-filters="sRGB">` +
+                `<feDropShadow dx="${dx}" dy="${dy}" stdDeviation="1.2" flood-opacity=".5"/></filter></defs>` +
+                `<g transform="rotate(${angle} 16 16)" filter="url(#shadow)">` +
+                `<path d="${ROTATE_CORNER_SVG}" fill="white" stroke="white" stroke-width="2" stroke-linejoin="round"/>` +
+                `<path d="${ROTATE_CORNER_SVG}" fill="#222"/>` +
+                `</g></svg>`;
+            cursorCache.set(key, `url("data:image/svg+xml,${encodeURIComponent(svg)}") 16 16, pointer`);
         }
         return cursorCache.get(key);
     }
@@ -192,14 +245,13 @@
         document.body.style.removeProperty('--sticker-cursor');
     }
 
-    function addSticker(src) {
+    function addSticker(src, paletteImgWidth, paletteImgHeight) {
         if (!frameEl) return;
-        const img = new Image();
-        img.onload = () => {
-            const rect = frameEl.getBoundingClientRect();
-            const targetH = 24;
-            const aspect = img.naturalWidth / img.naturalHeight;
-            const targetW = targetH * aspect * (rect.height / rect.width);
+        const rect = frameEl.getBoundingClientRect();
+
+        if (paletteImgWidth && paletteImgHeight) {
+            const targetW = (paletteImgWidth / rect.width) * 100;
+            const targetH = (paletteImgHeight / rect.height) * 100;
             const newSticker = {
                 id: nextStickerId++,
                 src,
@@ -209,22 +261,53 @@
                 height: targetH,
                 rotation: 0
             };
-            currentNote = {
-                ...currentNote,
-                stickers: [...currentNote.stickers, newSticker]
-            };
+            currentNote = { ...currentNote, stickers: [...currentNote.stickers, newSticker] };
             selectedStickerId = newSticker.id;
-        };
-        img.src = src;
+        } else {
+            const img = new Image();
+            img.onload = () => {
+                const r = frameEl.getBoundingClientRect();
+                const targetH = 24;
+                const aspect = img.naturalWidth / img.naturalHeight;
+                const targetW = targetH * aspect * (r.height / r.width);
+                const newSticker = {
+                    id: nextStickerId++,
+                    src,
+                    x: 50 - targetW / 2,
+                    y: 50 - targetH / 2,
+                    width: targetW,
+                    height: targetH,
+                    rotation: 0
+                };
+                currentNote = { ...currentNote, stickers: [...currentNote.stickers, newSticker] };
+                selectedStickerId = newSticker.id;
+            };
+            img.src = src;
+        }
     }
 
     function handlePaletteDragStart(event) {
+        // Ensure any in-progress sticker interactions are cleaned up before starting a palette drag
+        resetStickerInteractionState();
+
         const { src, clientX, clientY, imgWidth, imgHeight, offsetX, offsetY } = event.detail;
         const img = new Image();
         img.src = src;
         const nw = img.complete ? img.naturalWidth : 100;
         const nh = img.complete ? img.naturalHeight : 100;
-        paletteDrag = { src, x: clientX, y: clientY, startX: clientX, startY: clientY, naturalWidth: nw, naturalHeight: nh, imgWidth, imgHeight, offsetX, offsetY };
+        paletteDrag = {
+            src,
+            x: clientX,
+            y: clientY,
+            startX: clientX,
+            startY: clientY,
+            naturalWidth: nw,
+            naturalHeight: nh,
+            imgWidth,
+            imgHeight,
+            offsetX,
+            offsetY
+        };
     }
 
     function findStickerIndex(id) {
@@ -278,7 +361,7 @@
             let newRotation = rotateStickerStartRotation + (currentAngle - rotateStartAngle);
             if (event.shiftKey) newRotation = Math.round(newRotation / 15) * 15;
             updateSticker(index, { rotation: newRotation });
-            setBodyCursor(getRotateCursor(newRotation));
+            setBodyCursor(getRotateCursor(newRotation + rotateCornerBase));
             return;
         }
 
@@ -356,46 +439,55 @@
 
     function handleWindowMouseUp(event) {
         if (paletteDrag) {
-            const moved = Math.hypot(paletteDrag.x - paletteDrag.startX, paletteDrag.y - paletteDrag.startY) > 5;
+            const moved =
+                Math.hypot(
+                    paletteDrag.x - paletteDrag.startX,
+                    paletteDrag.y - paletteDrag.startY
+                ) > 5;
+
             if (!moved) {
-                addSticker(paletteDrag.src);
-                paletteDrag = null;
-                return;
+                addSticker(paletteDrag.src, paletteDrag.imgWidth, paletteDrag.imgHeight);
+            } else {
+                const rect = frameEl?.getBoundingClientRect();
+                if (
+                    rect &&
+                    paletteDrag.x >= rect.left &&
+                    paletteDrag.x <= rect.right &&
+                    paletteDrag.y >= rect.top &&
+                    paletteDrag.y <= rect.bottom
+                ) {
+                    const targetW = (paletteDrag.imgWidth / rect.width) * 100;
+                    const targetH = (paletteDrag.imgHeight / rect.height) * 100;
+                    const grabFracX =
+                        paletteDrag.imgWidth > 0 ? paletteDrag.offsetX / paletteDrag.imgWidth : 0.5;
+                    const grabFracY =
+                        paletteDrag.imgHeight > 0 ? paletteDrag.offsetY / paletteDrag.imgHeight : 0.5;
+                    const xPct =
+                        ((paletteDrag.x - rect.left) / rect.width) * 100 - targetW * grabFracX;
+                    const yPct =
+                        ((paletteDrag.y - rect.top) / rect.height) * 100 - targetH * grabFracY;
+                    const newSticker = {
+                        id: nextStickerId++,
+                        src: paletteDrag.src,
+                        x: clamp(xPct, -0.5 * targetW, 100 - 0.5 * targetW),
+                        y: clamp(yPct, -0.5 * targetH, 100 - 0.5 * targetH),
+                        width: targetW,
+                        height: targetH,
+                        rotation: 0
+                    };
+                    currentNote = {
+                        ...currentNote,
+                        stickers: [...currentNote.stickers, newSticker]
+                    };
+                    selectedStickerId = newSticker.id;
+                }
             }
-            const rect = frameEl?.getBoundingClientRect();
-            if (rect && paletteDrag.x >= rect.left && paletteDrag.x <= rect.right && paletteDrag.y >= rect.top && paletteDrag.y <= rect.bottom) {
-                const aspect = paletteDrag.naturalWidth / paletteDrag.naturalHeight;
-                const targetH = 24;
-                const targetW = targetH * aspect * (rect.height / rect.width);
-                const grabFracX = paletteDrag.offsetX / paletteDrag.imgWidth;
-                const grabFracY = paletteDrag.offsetY / paletteDrag.imgHeight;
-                const xPct = ((paletteDrag.x - rect.left) / rect.width) * 100 - targetW * grabFracX;
-                const yPct = ((paletteDrag.y - rect.top) / rect.height) * 100 - targetH * grabFracY;
-                const newSticker = {
-                    id: nextStickerId++,
-                    src: paletteDrag.src,
-                    x: clamp(xPct, -0.5 * targetW, 100 - 0.5 * targetW),
-                    y: clamp(yPct, -0.5 * targetH, 100 - 0.5 * targetH),
-                    width: targetW,
-                    height: targetH,
-                    rotation: 0
-                };
-                currentNote = { ...currentNote, stickers: [...currentNote.stickers, newSticker] };
-                selectedStickerId = newSticker.id;
-            }
+
             paletteDrag = null;
-            return;
         }
+
         if (!isDragging && !isResizing && !isRotating) return;
-        isDragging = false;
-        dragStickerId = null;
-        isResizing = false;
-        resizeStickerId = null;
-        resizeHandle = null;
-        resizeFrameRect = undefined;
-        isRotating = false;
-        rotateStickerId = null;
-        clearBodyCursor();
+        resetStickerInteractionState();
     }
 
     function handleResizeMouseDown(event, id, handle) {
@@ -424,7 +516,7 @@
         setBodyCursor(getResizeCursor(handle, sticker.rotation || 0));
     }
 
-    function handleRotateMouseDown(event, id) {
+    function handleRotateMouseDown(event, id, cornerBase = 0) {
         event.stopPropagation();
         event.preventDefault();
         if (!frameEl) return;
@@ -443,17 +535,47 @@
         const dy = event.clientY - rotateCenterClientY;
         rotateStartAngle = (Math.atan2(dy, dx) * 180) / Math.PI;
         rotateStickerStartRotation = sticker.rotation || 0;
+        rotateCornerBase = cornerBase;
         isRotating = true;
         rotateStickerId = id;
-        setBodyCursor(getRotateCursor(sticker.rotation || 0));
+        setBodyCursor(getRotateCursor((sticker.rotation || 0) + cornerBase));
+    }
+
+    function resetStickerInteractionState() {
+        isDragging = false;
+        dragStickerId = null;
+        isResizing = false;
+        resizeStickerId = null;
+        resizeHandle = null;
+        resizeFrameRect = undefined;
+        isRotating = false;
+        rotateStickerId = null;
+        rotateCornerBase = 0;
+        clearBodyCursor();
     }
 
     function deleteSticker(id) {
+        if (dragStickerId === id || resizeStickerId === id || rotateStickerId === id) {
+            resetStickerInteractionState();
+        }
         currentNote = {
             ...currentNote,
             stickers: currentNote.stickers.filter((s) => s.id !== id)
         };
         if (selectedStickerId === id) selectedStickerId = null;
+    }
+
+    function deleteSelectedSticker() {
+        if (selectedStickerId == null) return;
+        deleteSticker(selectedStickerId);
+    }
+
+    function clearStickers() {
+        if (currentNote.stickers.length === 0) return;
+        resetStickerInteractionState();
+        currentNote = { ...currentNote, stickers: [] };
+        selectedStickerId = null;
+        hoveredStickerId = null;
     }
 
     function handleKeydown(event) {
@@ -495,8 +617,8 @@
         return { targetLines: MAX_TEXT_LINES, visualLines: getVisualLineCount(el) };
     }
 
-    function handleTextInput(event) {
-        const el = event.target;
+    function adjustNoteText(el) {
+        if (!el) return;
         const value = el.value;
         currentNote = { ...currentNote, text: value };
 
@@ -517,31 +639,129 @@
         el.style.height = `${el.scrollHeight}px`;
     }
 
-    $: canPublish = currentNote.text.trim().length > 0 || currentNote.stickers.length > 0;
+    function handleTextInput(event) {
+        adjustNoteText(event.target);
+    }
 
-    function publishNote() {
-        if (!canPublish) return;
-        const noteToAdd = {
-            ...currentNote,
-            id: nextNoteId++,
-            createdAt: todayString,
-            stickers: currentNote.stickers.map((s) => ({ ...s })),
-            deckRotation: Math.random() * 30 - 15,
-            deckOffsetX: Math.random() * 20 - 10,
-            deckOffsetY: Math.random() * 20 - 10
-        };
-        publishedNotes = [noteToAdd, ...publishedNotes];
+    function startNewSession() {
+        resetStickerInteractionState();
         currentNote = createEmptyNote();
         lastValidText = currentNote.text;
         lastValidTextSizeLines = currentNote.textSizeLines;
         selectedStickerId = null;
+        hoveredStickerId = null;
+        showBuilder = false;
+        requestAnimationFrame(() => { showBuilder = true; });
+    }
+
+    $: canPublish = currentNote.text.trim().length > 0 || currentNote.stickers.length > 0;
+
+    async function loadMore() {
+        if (loadingMore || !hasMore) return;
+        loadingMore = true;
+        try {
+            const result = await fetchNotes(PAGE_SIZE, lastDoc);
+            publishedNotes = [...publishedNotes, ...result.notes];
+            lastDoc = result.lastDoc;
+            hasMore = result.hasMore;
+        } catch (err) {
+            console.error('Failed to load more notes:', err);
+        } finally {
+            loadingMore = false;
+        }
+    }
+
+    let publishError = false;
+
+    async function resolveRedirectUrl(url) {
+        try {
+            const res = await fetch(url, { redirect: 'follow' });
+            return res.url || url;
+        } catch {
+            return url;
+        }
+    }
+
+    let isPublishing = false;
+
+    async function publishNote() {
+        if (!canPublish || publishPhase || isPublishing) return;
+        resetStickerInteractionState();
+        publishError = false;
+        isPublishing = true;
+
+        const note = {
+            ...currentNote,
+            id: '',
+            createdAt: todayString,
+            stickers: currentNote.stickers.map((s) => ({ ...s })),
+            deckRotation: Math.random() * 8 - 4,
+            deckOffsetX: Math.random() * 16 - 8,
+            deckOffsetY: 0
+        };
+
+        try {
+            note.backgroundUrl = await resolveRedirectUrl(note.backgroundUrl);
+            const docId = await saveNote(note);
+            note.id = docId;
+            pendingPublish = note;
+            publishPhase = 'out';
+        } catch (err) {
+            console.error('Failed to publish note:', err);
+            publishError = true;
+        } finally {
+            isPublishing = false;
+        }
+    }
+
+    function handlePublishAnimationEnd(e) {
+        if (e.target !== e.currentTarget) return;
+        if (publishPhase === 'out') {
+            if (pendingPublish) {
+                publishedNotes = [pendingPublish, ...publishedNotes];
+                pendingPublish = null;
+            }
+            currentNote = createEmptyNote();
+            lastValidText = currentNote.text;
+            lastValidTextSizeLines = currentNote.textSizeLines;
+            selectedStickerId = null;
+            showBuilder = false;
+            publishPhase = 'in';
+        } else if (publishPhase === 'in') {
+            publishPhase = null;
+        }
     }
 
     const RESIZE_HANDLES = ["tl", "tr", "bl", "br", "l", "r", "t", "b"];
     const ROTATE_CORNERS = ["tl", "tr", "bl", "br"];
-    const ROTATE_CORNER_BASE = { tl: 315, tr: 45, bl: 225, br: 135 };
+    const ROTATE_CORNER_BASE = { tl: 0, tr: 90, bl: 270, br: 180 };
 
-    onMount(() => {
+    function handlePaletteReload() {
+        if (palettePhase) return;
+        pendingPalette = randomPalette();
+        palettePhase = 'out';
+    }
+
+    /** @param {AnimationEvent} e */
+    function handlePaletteAnimationEnd() {
+        if (palettePhase === 'out') {
+            stickerPalette = pendingPalette || randomPalette();
+            pendingPalette = null;
+            palettePhase = 'in';
+        } else if (palettePhase === 'in') {
+            palettePhase = null;
+        }
+    }
+
+    afterNavigate(({ from, to }) => {
+        if (from?.url && to?.url && from.url.pathname === to.url.pathname) {
+            showBuilder = false;
+            publishPhase = null;
+            pendingPublish = null;
+        }
+    });
+
+    onMount(async () => {
         if (typeof window === "undefined") return;
         window.addEventListener("mousemove", handleWindowMouseMove);
         window.addEventListener("mouseup", handleWindowMouseUp);
@@ -551,7 +771,23 @@
             resizeObserver = new ResizeObserver(() => { canvasHeight = frameEl.clientHeight; });
             resizeObserver.observe(frameEl);
         }
+
+        try {
+            const result = await fetchNotes(PAGE_SIZE);
+            publishedNotes = result.notes;
+            lastDoc = result.lastDoc;
+            hasMore = result.hasMore;
+        } catch (err) {
+            console.error('Failed to load notes:', err);
+        } finally {
+            loadingNotes = false;
+        }
     });
+
+    $: if (showBuilder && noteTextEl && typeof window !== "undefined") {
+        // Ensure placeholder text uses the correct initial scaling
+        adjustNoteText(noteTextEl);
+    }
 
     onDestroy(() => {
         if (typeof window === "undefined") return;
@@ -570,7 +806,34 @@
 />
 
 <main class="mt-8 space-y-10">
-    <section class="note-layout">
+    <section class="mt-4">
+        <div class="header-row">
+            <div>
+                <h2 class="font-serif text-2xl font-semibold text-left">Leave a note!</h2>
+                <p class="font-serif text-base text-left mt-2">Build your own polaroid card, leave a note, and publish it to my website :)</p>
+            </div>
+            <button
+                class="header-camera-group"
+                class:active={showBuilder}
+                on:click={startNewSession}
+                aria-label="Start a new polaroid"
+            >
+                <img src="{base}/images/polaroid_camera.png" alt="Polaroid camera" class="header-camera" />
+                <span class="header-camera-hint font-serif">(hint: click the camera)</span>
+            </button>
+        </div>
+        <hr class="separator" />
+    </section>
+
+    <div
+        class="publish-content"
+        class:publish-out={publishPhase === 'out'}
+        class:publish-in={publishPhase === 'in'}
+        on:animationend={handlePublishAnimationEnd}
+    >
+    {#if showBuilder}
+    <div class="fade-in">
+        <section class="note-layout">
         <div role="presentation" on:mousedown={handleFrameMouseDown}>
             <PolaroidCard
                 date={currentNote.createdAt}
@@ -603,7 +866,7 @@
                                         class="sticker-rotate-corner sticker-rotate-corner-{corner}"
                                         style="cursor: {getRotateCursor((sticker.rotation || 0) + ROTATE_CORNER_BASE[corner])}"
                                         role="presentation"
-                                        on:mousedown={(event) => handleRotateMouseDown(event, sticker.id)}
+                                        on:mousedown={(event) => handleRotateMouseDown(event, sticker.id, ROTATE_CORNER_BASE[corner])}
                                     ></div>
                                 {/each}
 
@@ -619,9 +882,9 @@
                                 <div class="sticker-rotate-line"></div>
                                 <div
                                     class="sticker-rotate-handle"
-                                    style="cursor: {getRotateCursor(sticker.rotation)}"
+                                    style="cursor: {getRotateCursor((sticker.rotation || 0) + 45)}"
                                     role="presentation"
-                                    on:mousedown={(event) => handleRotateMouseDown(event, sticker.id)}
+                                    on:mousedown={(event) => handleRotateMouseDown(event, sticker.id, 45)}
                                 ></div>
                             {/if}
                         </div>
@@ -633,6 +896,7 @@
                         class="note-text font-serif"
                         rows="1"
                         placeholder="leave a note"
+                        bind:this={noteTextEl}
                         value={currentNote.text}
                         on:input={handleTextInput}
                     ></textarea>
@@ -640,22 +904,60 @@
             </PolaroidCard>
         </div>
 
-        <StickerPalette stickers={stickerPalette} maxHeight={stickerSpawnHeight} draggingSrc={paletteDrag && Math.hypot(paletteDrag.x - paletteDrag.startX, paletteDrag.y - paletteDrag.startY) > 5 ? paletteDrag.src : null} on:dragstart={handlePaletteDragStart} />
-    </section>
+        <div class="controls">
+            <StickerPalette
+                stickers={stickerPalette}
+                maxHeight={stickerSpawnHeight}
+                draggingSrc={paletteDrag && Math.hypot(paletteDrag.x - paletteDrag.startX, paletteDrag.y - paletteDrag.startY) > 5 ? paletteDrag.src : null}
+                phase={palettePhase}
+                on:dragstart={handlePaletteDragStart}
+                on:reload={handlePaletteReload}
+                on:animationend={handlePaletteAnimationEnd}
+            />
 
-    <div class="publish-row">
-        <button
-            type="button"
-            class="publish-button"
-            on:click={publishNote}
-            disabled={!canPublish}
-        >
-            publish
-        </button>
+            <div class="actions">
+                <button
+                    type="button"
+                    class="action-button action-button-clear"
+                    on:click={clearStickers}
+                    disabled={currentNote.stickers.length === 0}
+                >
+                    clear
+                </button>
+                <button
+                    type="button"
+                    class="action-button action-button-delete"
+                    on:click={deleteSelectedSticker}
+                    disabled={selectedStickerId == null}
+                >
+                    delete
+                </button>
+                <button
+                    type="button"
+                    class="action-button action-button-publish"
+                    on:click={publishNote}
+                    disabled={!canPublish || isPublishing}
+                >
+                    {#if isPublishing}
+                        publishing<span class="publishing-dots"></span>
+                    {:else}
+                        publish
+                    {/if}
+                </button>
+                {#if publishError}
+                    <p class="publish-error font-serif">something went wrong – try again?</p>
+                {/if}
+            </div>
+        </div>
+    </section>
+        <hr class="separator" />
     </div>
+    {/if}
 
     <section class="deck">
-        {#if publishedNotes.length === 0}
+        {#if loadingNotes}
+            <p class="font-serif text-sm text-neutral-400">loading notes...</p>
+        {:else if publishedNotes.length === 0}
             <p class="font-serif text-sm text-neutral-500">no notes yet – make one!</p>
         {:else}
             <div class="deck-grid">
@@ -691,8 +993,20 @@
                     </article>
                 {/each}
             </div>
+            {#if hasMore}
+                <div class="load-more-row">
+                    <button
+                        class="load-more font-serif"
+                        on:click={loadMore}
+                        disabled={loadingMore}
+                    >
+                        {loadingMore ? 'loading...' : 'load more'}
+                    </button>
+                </div>
+            {/if}
         {/if}
     </section>
+    </div>
 </main>
 
 {#if paletteDrag && Math.hypot(paletteDrag.x - paletteDrag.startX, paletteDrag.y - paletteDrag.startY) > 5}
@@ -713,10 +1027,53 @@
         align-items: flex-start;
     }
 
+    .fade-in {
+        margin-top: 1.5rem;
+        animation: fadeIn 0.4s ease both;
+    }
+
+    .publish-content {
+        position: relative;
+    }
+
+    .publish-out {
+        animation: slideOutDown 0.35s ease both;
+        pointer-events: none;
+    }
+
+    .publish-in {
+        animation: slideInDown 0.35s ease both;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-12px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideOutDown {
+        from { opacity: 1; transform: translateY(0); }
+        to   { opacity: 0; transform: translateY(12px); }
+    }
+
+    @keyframes slideInDown {
+        from { opacity: 0; transform: translateY(-12px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
     @media (max-width: 768px) {
         .note-layout {
             grid-template-columns: minmax(0, 1fr);
         }
+    }
+
+    .controls {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 1rem;
+        align-items: stretch;
+        align-self: stretch;
+        padding-bottom: 0.25rem;
     }
 
     .note-text {
@@ -725,7 +1082,7 @@
         border: none;
         outline: none;
         background: transparent;
-        font-family: "KyleHandwriting", ui-serif, system-ui;
+        font-family: "KyleHandwriting", "Comic Sans MS", "Comic Sans", ui-serif, system-ui;
         font-size: 4.4cqi;
         line-height: 1.1;
         overflow: hidden;
@@ -780,6 +1137,7 @@
         border-radius: 999px;
         background: transparent;
         border: none;
+        z-index: 3;
     }
 
     .sticker-handle::after {
@@ -814,6 +1172,7 @@
         background: #000;
         transform: translateX(-50%);
         pointer-events: none;
+        z-index: 1;
     }
 
     .sticker-rotate-handle {
@@ -826,6 +1185,7 @@
         background: #fff;
         border: 1px solid #000;
         transform: translate(-50%, -16px);
+        z-index: 2;
     }
 
     .sticker-rotate-handle:hover {
@@ -843,68 +1203,192 @@
     .sticker-rotate-corner-bl { bottom: -20px; left: -20px; border-top-right-radius: 100%; }
     .sticker-rotate-corner-br { bottom: -20px; right: -20px; border-top-left-radius: 100%; }
 
-    /* --- publish button --- */
+    /* --- actions (clear / delete / publish) --- */
 
-    .publish-row {
-        display: flex;
-        justify-content: center;
+    .actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.9rem;
+        align-items: stretch;
     }
 
-    .publish-button {
-        min-width: 160px;
-        padding: 0.7rem 1.4rem 0.5rem;
-        border-radius: 999px;
-        border: 2px solid #222;
-        background: #fdf4dc;
-        font-family: "KyleHandwriting", ui-serif, system-ui;
-        font-size: 1.5rem;
+    .action-button {
+        border: 3px solid currentColor;
+        color: #000;
+        background: #fff;
+        border-radius: 12px;
+        padding: 0.7rem 0.9rem 0.5rem;
+        font-family: "KyleHandwriting", "Comic Sans MS", "Comic Sans", ui-serif, system-ui;
+        font-size: 1.6rem;
         text-transform: lowercase;
-        box-shadow: 0px 4px 0 #222;
         cursor: pointer;
-        transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease, opacity 120ms ease;
+        transition: transform 120ms ease, background-color 120ms ease, opacity 120ms ease;
+        line-height: 1;
     }
 
-    .publish-button:hover:enabled {
+    .action-button:hover:enabled {
         transform: translateY(-1px);
-        box-shadow: 0px 8px 0 #222;
-        background-color: #ffeec0;
     }
 
-    .publish-button:active:enabled {
-        transform: translateY(2px);
-        box-shadow: 0px 2px 0 #222;
-        background-color: #ffe3a0;
+    .action-button:active:enabled {
+        transform: translateY(1px);
     }
 
-    .publish-button:disabled {
+    .action-button:disabled {
         opacity: 0.5;
         cursor: default;
-        box-shadow: 0px 4px 0 #222;
+    }
+
+    .action-button-clear {
+        color: #2563EB;
+    }
+
+    .action-button-clear:hover:enabled {
+        background: #EFF6FF;
+    }
+
+    .action-button-clear:active:enabled {
+        background: #BFDBFE;
+    }
+
+    .action-button-delete {
+        color: #DC2626;
+    }
+
+    .action-button-delete:hover:enabled {
+        background: #FEF2F2;
+    }
+
+    .action-button-delete:active:enabled {
+        background: #FECACA;
+    }
+
+    .action-button-publish {
+        grid-column: 1 / -1;
+        justify-self: stretch;
+        color: #16A34A;
+    }
+
+    .action-button-publish:hover:enabled {
+        background: #F0FDF4;
+    }
+
+    .action-button-publish:active:enabled {
+        background: #BBF7D0;
+    }
+
+    .publishing-dots::after {
+        content: '.';
+        animation: dotCycle 1.2s steps(1) infinite;
+    }
+
+    @keyframes dotCycle {
+        0%      { content: '.'; }
+        33.33%  { content: '..'; }
+        66.66%  { content: '...'; }
+    }
+
+    .publish-error {
+        grid-column: 1 / -1;
+        text-align: center;
+        color: #DC2626;
+        font-size: 0.8rem;
+        margin: 0;
+    }
+
+    .header-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1.5rem;
+    }
+
+    .header-camera-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex-shrink: 0;
+        cursor: pointer;
+        padding: 0.25rem 0.5rem;
+        background: none;
+        border: none;
+        outline: none;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .header-camera {
+        width: 120px;
+        height: auto;
+        filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.15));
+        transition: filter 150ms ease, transform 150ms ease;
+    }
+
+    .header-camera-group:hover .header-camera {
+        animation: jiggle 0.3s ease infinite;
+        filter: drop-shadow(0 5px 6px rgba(0, 0, 0, 0.22));
+    }
+
+    .header-camera-group:active .header-camera {
+        animation: none;
+        transform: scale(0.92);
+        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.12));
+    }
+
+    .header-camera-group.active .header-camera {
+        filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.12));
+    }
+
+    .header-camera-hint {
+        font-size: 0.7rem;
+        color: #9e9a92;
+        margin-top: 0.6rem;
+        white-space: nowrap;
+        transition: color 150ms ease;
+    }
+
+    .header-camera-group:hover .header-camera-hint {
+        color: #2563EB;
+    }
+
+    @keyframes jiggle {
+        0%   { transform: rotate(0deg); }
+        25%  { transform: rotate(-3deg); }
+        50%  { transform: rotate(3deg); }
+        75%  { transform: rotate(-2deg); }
+        100% { transform: rotate(0deg); }
+    }
+
+    .separator {
+        border: none;
+        border-top: 1px dashed #d5d0c4;
+        margin-top: 1.5rem;
+        margin-bottom: 1.5rem;
     }
 
     /* --- deck --- */
 
     .deck {
         padding-top: 0.5rem;
-        border-top: 1px dashed #d5d0c4;
     }
 
     .deck-grid {
-        display: flex;
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.5rem 0.5rem; /* Reduced gap to allow more overlap */
         margin-top: 0.75rem;
-        margin-left: 0.5rem;
+        justify-items: center;
+        margin-left: -1.5rem; /* Negative margin to enable overlap at grid edges */
+        margin-right: -1.5rem;
     }
 
     .deck-card {
-        width: 150px;
+        width: 100%;
+        max-width: 190px;
         aspect-ratio: 657 / 794;
         cursor: pointer;
         filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
         transition: transform 160ms ease, filter 160ms ease;
         position: relative;
-        margin-left: -2.25rem;
-        margin-bottom: -1.5rem;
         transform: translate(var(--dx, 0), var(--dy, 0)) rotate(var(--rot, 0deg));
     }
 
@@ -927,7 +1411,7 @@
     }
 
     .deck-text {
-        font-family: "KyleHandwriting", ui-serif, system-ui;
+        font-family: "KyleHandwriting", "Comic Sans MS", "Comic Sans", ui-serif, system-ui;
         font-size: 4.4cqi;
         line-height: 1.1;
         overflow: hidden;
@@ -944,6 +1428,34 @@
     .deck-text-1l { font-size: 8.8cqi; }
     .deck-text-2l { font-size: 6.6cqi; }
     .deck-text-3l { font-size: 4.4cqi; }
+
+    .load-more-row {
+        text-align: center;
+        margin-top: 1.5rem;
+    }
+
+    .load-more {
+        background: none;
+        border: none;
+        color: #2563EB;
+        font-size: 0.95rem;
+        cursor: pointer;
+        padding: 0.25rem 0.5rem;
+        transition: color 120ms ease;
+    }
+
+    .load-more:hover {
+        color: #000;
+    }
+
+    .load-more:active {
+        font-weight: 700;
+    }
+
+    .load-more:disabled {
+        cursor: default;
+        opacity: 0.6;
+    }
 
     :global(.palette-drag-ghost) {
         position: fixed;

@@ -1,4 +1,5 @@
 <script>
+    import { base } from "$app/paths";
     export let date = "";
     export let backgroundUrl = "";
     export let innerEl = undefined;
@@ -10,8 +11,15 @@
     <div
         class="polaroid-inner"
         bind:this={innerEl}
-        style={`background-image: url(${backgroundUrl}); background-size: cover; background-position: center;`}
     >
+        {#if backgroundUrl}
+            <img
+                class="polaroid-bg"
+                src={backgroundUrl}
+                alt=""
+                aria-hidden="true"
+            />
+        {/if}
         <slot name="canvas" />
     </div>
     <span class="polaroid-date">{date}</span>
@@ -19,7 +27,7 @@
         <slot name="footer" />
     </div>
     <img
-        src="/images/polaroid.png"
+        src="{base}/images/polaroid.png"
         alt=""
         class="polaroid-overlay"
         aria-hidden="true"
@@ -46,11 +54,25 @@
         left: 7.31%;     /* 48 / 657 */
         right: 7.31%;
         bottom: 21.28%;  /* 169 / 794 */
-        background: transparent;
+        background: #e8e4db;
         border-radius: 0.6cqi;
         border: none;
         overflow: hidden;
         z-index: 0;
+    }
+
+    .polaroid-bg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        animation: bgFadeIn 0.4s ease-out both;
+    }
+
+    @keyframes bgFadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
     }
 
     .polaroid-date {

@@ -8,7 +8,8 @@
 		"deploy": "npm run build && npx copyfiles CNAME build && npx gh-pages -d build -t",
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json",
-		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json --watch"
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json --watch",
+		"emulators": "firebase emulators:start"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^5.0.0",
@@ -26,6 +27,7 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"firebase": "^12.10.0",
 		"mdsvex": "^0.12.3"
 	}
 }

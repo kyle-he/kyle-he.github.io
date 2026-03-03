@@ -26,8 +26,9 @@
         <img
             src="{base}/images/selfie.jpeg"
             alt="selfie"
-            style="border: 2px solid black; border-radius: 0; display: block; width: 100%; max-width: 400px;"
+            style="border: 2px solid black; border-radius: 0; display: block; width: 100%; max-width: 400px; opacity: 0; transition: opacity 0.35s ease-out;"
             class="mt-4"
+            on:load={(e) => { e.target.style.opacity = '1'; }}
         />
     </section>
 
