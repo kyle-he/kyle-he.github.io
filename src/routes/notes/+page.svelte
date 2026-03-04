@@ -117,9 +117,8 @@
     }
 
     function randomBackgroundUrl() {
-        const seed =
-            Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-        return `https://picsum.photos/seed/${seed}/600/600`;
+        const seed = Math.floor(Math.random() * 10_000_000);
+        return `https://picsum.photos/seed/${seed}/600/600.jpg`;
     }
 
     function createEmptyNote() {
@@ -188,6 +187,7 @@
     let paletteDrag = null;
     let canvasHeight = 0;
     let resizeObserver;
+    let isCoarsePointer = false;
     $: stickerSpawnHeight = canvasHeight * 0.24;
 
     const HANDLE_BASE_ANGLE = { t: 90, b: 90, l: 0, r: 0, tl: 45, br: 45, tr: 135, bl: 135 };
@@ -320,8 +320,13 @@
         currentNote = { ...currentNote, stickers: stickersCopy };
     }
 
-    function handleStickerMouseDown(event, id) {
+    function detectCoarsePointer(event) {
+        isCoarsePointer = event.pointerType !== 'mouse';
+    }
+
+    function handleStickerPointerDown(event, id) {
         event.stopPropagation();
+        detectCoarsePointer(event);
         if (!frameEl) return;
         const index = findStickerIndex(id);
         if (index === -1) return;
@@ -337,14 +342,15 @@
         dragStartClientY = event.clientY;
         dragStartStickerX = currentNote.stickers[index].x;
         dragStartStickerY = currentNote.stickers[index].y;
-        setBodyCursor('grabbing');
+        if (!isCoarsePointer) setBodyCursor('grabbing');
     }
 
-    function handleFrameMouseDown() {
+    function handleFramePointerDown(event) {
+        detectCoarsePointer(event);
         selectedStickerId = null;
     }
 
-    function handleWindowMouseMove(event) {
+    function handleWindowPointerMove(event) {
         if (paletteDrag) {
             paletteDrag = { ...paletteDrag, x: event.clientX, y: event.clientY };
             return;
@@ -361,7 +367,7 @@
             let newRotation = rotateStickerStartRotation + (currentAngle - rotateStartAngle);
             if (event.shiftKey) newRotation = Math.round(newRotation / 15) * 15;
             updateSticker(index, { rotation: newRotation });
-            setBodyCursor(getRotateCursor(newRotation + rotateCornerBase));
+            if (!isCoarsePointer) setBodyCursor(getRotateCursor(newRotation + rotateCornerBase));
             return;
         }
 
@@ -437,7 +443,7 @@
         }
     }
 
-    function handleWindowMouseUp(event) {
+    function handleWindowPointerUp(event) {
         if (paletteDrag) {
             const moved =
                 Math.hypot(
@@ -490,9 +496,10 @@
         resetStickerInteractionState();
     }
 
-    function handleResizeMouseDown(event, id, handle) {
+    function handleResizePointerDown(event, id, handle) {
         event.stopPropagation();
         event.preventDefault();
+        detectCoarsePointer(event);
         if (!frameEl) return;
         const index = findStickerIndex(id);
         if (index === -1) return;
@@ -513,12 +520,13 @@
         resizeHandle = handle;
         isResizing = true;
         resizeStickerId = id;
-        setBodyCursor(getResizeCursor(handle, sticker.rotation || 0));
+        if (!isCoarsePointer) setBodyCursor(getResizeCursor(handle, sticker.rotation || 0));
     }
 
-    function handleRotateMouseDown(event, id, cornerBase = 0) {
+    function handleRotatePointerDown(event, id, cornerBase = 0) {
         event.stopPropagation();
         event.preventDefault();
+        detectCoarsePointer(event);
         if (!frameEl) return;
         const index = findStickerIndex(id);
         if (index === -1) return;
@@ -538,7 +546,7 @@
         rotateCornerBase = cornerBase;
         isRotating = true;
         rotateStickerId = id;
-        setBodyCursor(getRotateCursor((sticker.rotation || 0) + cornerBase));
+        if (!isCoarsePointer) setBodyCursor(getRotateCursor((sticker.rotation || 0) + cornerBase));
     }
 
     function resetStickerInteractionState() {
@@ -673,15 +681,6 @@
 
     let publishError = false;
 
-    async function resolveRedirectUrl(url) {
-        try {
-            const res = await fetch(url, { redirect: 'follow' });
-            return res.url || url;
-        } catch {
-            return url;
-        }
-    }
-
     let isPublishing = false;
 
     async function publishNote() {
@@ -701,7 +700,6 @@
         };
 
         try {
-            note.backgroundUrl = await resolveRedirectUrl(note.backgroundUrl);
             const docId = await saveNote(note);
             note.id = docId;
             pendingPublish = note;
@@ -763,9 +761,10 @@
 
     onMount(async () => {
         if (typeof window === "undefined") return;
-        window.addEventListener("mousemove", handleWindowMouseMove);
-        window.addEventListener("mouseup", handleWindowMouseUp);
+        window.addEventListener("pointermove", handleWindowPointerMove);
+        window.addEventListener("pointerup", handleWindowPointerUp);
         window.addEventListener("keydown", handleKeydown);
+        isCoarsePointer = window.matchMedia("(pointer: coarse)").matches;
         if (frameEl) {
             canvasHeight = frameEl.clientHeight;
             resizeObserver = new ResizeObserver(() => { canvasHeight = frameEl.clientHeight; });
@@ -791,8 +790,8 @@
 
     onDestroy(() => {
         if (typeof window === "undefined") return;
-        window.removeEventListener("mousemove", handleWindowMouseMove);
-        window.removeEventListener("mouseup", handleWindowMouseUp);
+        window.removeEventListener("pointermove", handleWindowPointerMove);
+        window.removeEventListener("pointerup", handleWindowPointerUp);
         window.removeEventListener("keydown", handleKeydown);
         resizeObserver?.disconnect();
     });
@@ -807,34 +806,40 @@
 
 <main class="mt-8 space-y-10">
     <section class="mt-4">
-        <div class="header-row">
+        <div class="flex items-start justify-between gap-6">
             <div>
                 <h2 class="font-serif text-2xl font-semibold text-left">Leave a note!</h2>
                 <p class="font-serif text-base text-left mt-2">Build your own polaroid card, leave a note, and publish it to my website :)</p>
             </div>
             <button
-                class="header-camera-group"
+                class="header-camera-group flex shrink-0 cursor-pointer flex-col items-center border-0 bg-transparent px-2 py-1 outline-none [-webkit-tap-highlight-color:transparent]"
                 class:active={showBuilder}
                 on:click={startNewSession}
                 aria-label="Start a new polaroid"
             >
-                <img src="{base}/images/polaroid_camera.png" alt="Polaroid camera" class="header-camera" />
-                <span class="header-camera-hint font-serif">(hint: click the camera)</span>
+                <img
+                    src="{base}/images/polaroid_camera.png"
+                    alt="Polaroid camera"
+                    class="header-camera h-auto w-[120px] [filter:drop-shadow(0_4px_4px_rgba(0,0,0,0.15))] transition-[filter,transform] duration-150 ease-in-out"
+                />
+                <span class="header-camera-hint mt-[0.6rem] whitespace-nowrap font-serif text-[0.7rem] text-[#9e9a92] transition-colors duration-150">
+                    (hint: click the camera)
+                </span>
             </button>
         </div>
-        <hr class="separator" />
+        <hr class="separator my-6 border-0 border-t border-dashed border-[#d5d0c4]" />
     </section>
 
     <div
-        class="publish-content"
+        class="publish-content relative"
         class:publish-out={publishPhase === 'out'}
         class:publish-in={publishPhase === 'in'}
         on:animationend={handlePublishAnimationEnd}
     >
     {#if showBuilder}
-    <div class="fade-in">
-        <section class="note-layout">
-        <div role="presentation" on:mousedown={handleFrameMouseDown}>
+    <div class="fade-in mt-6">
+        <section class="note-layout grid grid-cols-1 items-start gap-6 md:grid-cols-[minmax(0,1.6fr)_minmax(0,0.8fr)]">
+        <div role="presentation" on:pointerdown={handleFramePointerDown}>
             <PolaroidCard
                 date={currentNote.createdAt}
                 backgroundUrl={currentNote.backgroundUrl}
@@ -844,12 +849,12 @@
                 <svelte:fragment slot="canvas">
                     {#each currentNote.stickers as sticker}
                         <div
-                            class="sticker-wrapper {sticker.id === selectedStickerId ? 'selected' : sticker.id === hoveredStickerId ? 'hovered' : ''} {sticker.id === selectedStickerId && (isResizing || isRotating) ? 'interacting' : ''}"
+                            class="sticker-wrapper {sticker.id === selectedStickerId ? 'selected' : sticker.id === hoveredStickerId ? 'hovered' : ''} {sticker.id === selectedStickerId && (isResizing || isRotating) ? 'interacting' : ''} {isCoarsePointer ? 'coarse' : ''}"
                             style={stickerStyle(sticker)}
                             role="presentation"
-                            on:mousedown={(event) => handleStickerMouseDown(event, sticker.id)}
-                            on:mouseenter={() => hoveredStickerId = sticker.id}
-                            on:mouseleave={() => { if (hoveredStickerId === sticker.id) hoveredStickerId = null; }}
+                            on:pointerdown={(event) => handleStickerPointerDown(event, sticker.id)}
+                            on:pointerenter={(event) => { if (event.pointerType === 'mouse') hoveredStickerId = sticker.id; }}
+                            on:pointerleave={(event) => { if (event.pointerType === 'mouse' && hoveredStickerId === sticker.id) hoveredStickerId = null; }}
                         >
                             <img
                                 src={sticker.src}
@@ -866,7 +871,7 @@
                                         class="sticker-rotate-corner sticker-rotate-corner-{corner}"
                                         style="cursor: {getRotateCursor((sticker.rotation || 0) + ROTATE_CORNER_BASE[corner])}"
                                         role="presentation"
-                                        on:mousedown={(event) => handleRotateMouseDown(event, sticker.id, ROTATE_CORNER_BASE[corner])}
+                                        on:pointerdown={(event) => handleRotatePointerDown(event, sticker.id, ROTATE_CORNER_BASE[corner])}
                                     ></div>
                                 {/each}
 
@@ -875,7 +880,7 @@
                                         class="sticker-handle sticker-handle-{handle}"
                                         style="cursor: {getResizeCursor(handle, sticker.rotation)}"
                                         role="presentation"
-                                        on:mousedown={(event) => handleResizeMouseDown(event, sticker.id, handle)}
+                                        on:pointerdown={(event) => handleResizePointerDown(event, sticker.id, handle)}
                                     ></div>
                                 {/each}
 
@@ -884,7 +889,7 @@
                                     class="sticker-rotate-handle"
                                     style="cursor: {getRotateCursor((sticker.rotation || 0) + 45)}"
                                     role="presentation"
-                                    on:mousedown={(event) => handleRotateMouseDown(event, sticker.id, 45)}
+                                    on:pointerdown={(event) => handleRotatePointerDown(event, sticker.id, 45)}
                                 ></div>
                             {/if}
                         </div>
@@ -893,7 +898,7 @@
 
                 <svelte:fragment slot="footer">
                     <textarea
-                        class="note-text font-serif"
+                        class="note-text m-0 box-border w-full resize-none overflow-hidden border-0 bg-transparent p-0 [font-family:'KyleHandwriting','Comic_Sans_MS','Comic_Sans',ui-serif,system-ui] text-[4.4cqi] leading-[1.1] [word-break:break-word] outline-none placeholder:text-[#7e776d]"
                         rows="1"
                         placeholder="leave a note"
                         bind:this={noteTextEl}
@@ -904,7 +909,7 @@
             </PolaroidCard>
         </div>
 
-        <div class="controls">
+        <div class="controls flex self-stretch flex-col items-stretch justify-between gap-4 pb-1">
             <StickerPalette
                 stickers={stickerPalette}
                 maxHeight={stickerSpawnHeight}
@@ -915,10 +920,10 @@
                 on:animationend={handlePaletteAnimationEnd}
             />
 
-            <div class="actions">
+            <div class="actions grid grid-cols-2 items-stretch gap-[0.9rem]">
                 <button
                     type="button"
-                    class="action-button action-button-clear"
+                    class="action-button action-button-clear rounded-xl border-[3px] border-current bg-white px-[0.9rem] pb-[0.5rem] pt-[0.7rem] text-[1.6rem] lowercase leading-none text-blue-600 [font-family:'KyleHandwriting','Comic_Sans_MS','Comic_Sans',ui-serif,system-ui] transition-[transform,background-color,opacity] duration-[120ms] enabled:cursor-pointer enabled:hover:-translate-y-px enabled:hover:bg-blue-50 enabled:active:translate-y-px enabled:active:bg-blue-200 disabled:cursor-default disabled:opacity-50"
                     on:click={clearStickers}
                     disabled={currentNote.stickers.length === 0}
                 >
@@ -926,7 +931,7 @@
                 </button>
                 <button
                     type="button"
-                    class="action-button action-button-delete"
+                    class="action-button action-button-delete rounded-xl border-[3px] border-current bg-white px-[0.9rem] pb-[0.5rem] pt-[0.7rem] text-[1.6rem] lowercase leading-none text-red-600 [font-family:'KyleHandwriting','Comic_Sans_MS','Comic_Sans',ui-serif,system-ui] transition-[transform,background-color,opacity] duration-[120ms] enabled:cursor-pointer enabled:hover:-translate-y-px enabled:hover:bg-red-50 enabled:active:translate-y-px enabled:active:bg-red-200 disabled:cursor-default disabled:opacity-50"
                     on:click={deleteSelectedSticker}
                     disabled={selectedStickerId == null}
                 >
@@ -934,7 +939,7 @@
                 </button>
                 <button
                     type="button"
-                    class="action-button action-button-publish"
+                    class="action-button action-button-publish col-span-2 justify-self-stretch rounded-xl border-[3px] border-current bg-white px-[0.9rem] pb-[0.5rem] pt-[0.7rem] text-[1.6rem] lowercase leading-none text-green-600 [font-family:'KyleHandwriting','Comic_Sans_MS','Comic_Sans',ui-serif,system-ui] transition-[transform,background-color,opacity] duration-[120ms] enabled:cursor-pointer enabled:hover:-translate-y-px enabled:hover:bg-green-50 enabled:active:translate-y-px enabled:active:bg-green-200 disabled:cursor-default disabled:opacity-50"
                     on:click={publishNote}
                     disabled={!canPublish || isPublishing}
                 >
@@ -945,16 +950,16 @@
                     {/if}
                 </button>
                 {#if publishError}
-                    <p class="publish-error font-serif">something went wrong – try again?</p>
+                    <p class="publish-error col-span-2 m-0 text-center font-serif text-[0.8rem] text-red-600">something went wrong – try again?</p>
                 {/if}
             </div>
         </div>
     </section>
-        <hr class="separator" />
+        <hr class="separator my-6 border-0 border-t border-dashed border-[#d5d0c4]" />
     </div>
     {/if}
 
-    <section class="deck">
+    <section class="deck pt-2">
         {#if loadingNotes}
             <p class="font-serif text-sm text-neutral-400">loading notes...</p>
         {:else if publishedNotes.length === 0}
@@ -962,41 +967,40 @@
         {:else}
             <div class="deck-grid">
                 {#each publishedNotes as note (note.id)}
-                    <article
+                    <div
                         class="deck-card"
                         style={`--dx:${note.deckOffsetX}px;--dy:${note.deckOffsetY}px;--rot:${note.deckRotation}deg;`}
                     >
-                        <PolaroidCard date={note.createdAt} backgroundUrl={note.backgroundUrl} mini>
-                            <svelte:fragment slot="canvas">
-                                {#each note.stickers as sticker}
-                                    <div
-                                        class="deck-sticker"
-                                        style={stickerStyle(sticker)}
-                                    >
-                                        <img
-                                            src={sticker.src}
-                                            alt="sticker"
-                                            class="deck-sticker-img"
-                                            style={stickerImgScale(sticker)}
-                                            draggable="false"
-                                        />
-                                    </div>
-                                {/each}
-                            </svelte:fragment>
+                        <div class="deck-card-inner">
+                            <PolaroidCard date={note.createdAt} backgroundUrl={note.backgroundUrl} mini>
+                                <svelte:fragment slot="canvas">
+                                    {#each note.stickers as sticker}
+                                        <div class="deck-sticker absolute select-none [transform-origin:center]" style={stickerStyle(sticker)}>
+                                            <img
+                                                src={sticker.src}
+                                                alt="sticker"
+                                                class="deck-sticker-img h-full w-full object-contain"
+                                                style={stickerImgScale(sticker)}
+                                                draggable="false"
+                                            />
+                                        </div>
+                                    {/each}
+                                </svelte:fragment>
 
-                            <svelte:fragment slot="footer">
-                                {#if note.text.trim().length}
-                                    <p class="deck-text deck-text-{note.textSizeLines || 3}l">{note.text}</p>
-                                {/if}
-                            </svelte:fragment>
-                        </PolaroidCard>
-                    </article>
+                                <svelte:fragment slot="footer">
+                                    {#if note.text.trim().length}
+                                        <p class="deck-text m-0 overflow-hidden p-0 [font-family:'KyleHandwriting','Comic_Sans_MS','Comic_Sans',ui-serif,system-ui] leading-[1.1] [word-break:break-word] whitespace-pre-wrap [display:-webkit-box] [line-clamp:3] [-webkit-line-clamp:3] [-webkit-box-orient:vertical] deck-text-{note.textSizeLines || 3}l">{note.text}</p>
+                                    {/if}
+                                </svelte:fragment>
+                            </PolaroidCard>
+                        </div>
+                    </div>
                 {/each}
             </div>
             {#if hasMore}
-                <div class="load-more-row">
+                <div class="load-more-row mt-6 text-center">
                     <button
-                        class="load-more font-serif"
+                        class="load-more px-2 py-1 font-serif text-[0.95rem] text-blue-600 transition-colors duration-[120ms] enabled:cursor-pointer enabled:hover:text-black enabled:active:font-bold disabled:cursor-default disabled:opacity-60"
                         on:click={loadMore}
                         disabled={loadingMore}
                     >
@@ -1013,27 +1017,15 @@
     <img
         src={paletteDrag.src}
         alt=""
-        class="palette-drag-ghost"
+        class="palette-drag-ghost pointer-events-none fixed z-[9999] [filter:drop-shadow(0_6px_6px_rgba(0,0,0,0.5))]"
         style="left: {paletteDrag.x - paletteDrag.offsetX}px; top: {paletteDrag.y - paletteDrag.offsetY}px; width: {paletteDrag.imgWidth}px; height: {paletteDrag.imgHeight}px;"
         draggable="false"
     />
 {/if}
 
 <style>
-    .note-layout {
-        display: grid;
-        grid-template-columns: minmax(0, 1.6fr) minmax(0, 0.8fr);
-        gap: 1.5rem;
-        align-items: flex-start;
-    }
-
     .fade-in {
-        margin-top: 1.5rem;
         animation: fadeIn 0.4s ease both;
-    }
-
-    .publish-content {
-        position: relative;
     }
 
     .publish-out {
@@ -1060,48 +1052,13 @@
         to   { opacity: 1; transform: translateY(0); }
     }
 
-    @media (max-width: 768px) {
-        .note-layout {
-            grid-template-columns: minmax(0, 1fr);
-        }
-    }
-
-    .controls {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        gap: 1rem;
-        align-items: stretch;
-        align-self: stretch;
-        padding-bottom: 0.25rem;
-    }
-
-    .note-text {
-        width: 100%;
-        resize: none;
-        border: none;
-        outline: none;
-        background: transparent;
-        font-family: "KyleHandwriting", "Comic Sans MS", "Comic Sans", ui-serif, system-ui;
-        font-size: 4.4cqi;
-        line-height: 1.1;
-        overflow: hidden;
-        padding: 0;
-        margin: 0;
-        box-sizing: border-box;
-        word-break: break-word;
-    }
-
-    .note-text::placeholder {
-        color: #7e776d;
-    }
-
     /* --- sticker interaction layer --- */
 
     .sticker-wrapper {
         position: absolute;
         cursor: grab;
         user-select: none;
+        touch-action: none;
         transition: box-shadow 120ms ease;
         transform-origin: center;
         z-index: 0;
@@ -1132,11 +1089,12 @@
 
     .sticker-handle {
         position: absolute;
-        width: 18px;
-        height: 18px;
-        border-radius: 999px;
+        width: 44px;
+        height: 44px;
+        border-radius: 8px;
         background: transparent;
         border: none;
+        touch-action: none;
         z-index: 3;
     }
 
@@ -1158,10 +1116,10 @@
     .sticker-handle-bl { bottom: 0; left: 0; transform: translate(-50%, 50%); }
     .sticker-handle-br { bottom: 0; right: 0; transform: translate(50%, 50%); }
 
-    .sticker-handle-l { top: 50%; left: 0; width: 26px; height: 14px; transform: translate(-50%, -50%); }
-    .sticker-handle-r { top: 50%; right: 0; width: 26px; height: 14px; transform: translate(50%, -50%); }
-    .sticker-handle-t { top: 0; left: 50%; width: 26px; height: 14px; transform: translate(-50%, -50%); }
-    .sticker-handle-b { bottom: 0; left: 50%; width: 26px; height: 14px; transform: translate(-50%, 50%); }
+    .sticker-handle-l { top: 50%; left: 0; width: 44px; height: 44px; transform: translate(-50%, -50%); }
+    .sticker-handle-r { top: 50%; right: 0; width: 44px; height: 44px; transform: translate(50%, -50%); }
+    .sticker-handle-t { top: 0; left: 50%; width: 44px; height: 44px; transform: translate(-50%, -50%); }
+    .sticker-handle-b { bottom: 0; left: 50%; width: 44px; height: 44px; transform: translate(-50%, 50%); }
 
     .sticker-rotate-line {
         position: absolute;
@@ -1179,102 +1137,70 @@
         position: absolute;
         left: 50%;
         bottom: 100%;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: transparent;
+        border: none;
+        transform: translate(-50%, -16px);
+        touch-action: none;
+        z-index: 2;
+    }
+
+    .sticker-rotate-handle::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        bottom: 0;
         width: 10px;
         height: 10px;
         border-radius: 50%;
         background: #fff;
         border: 1px solid #000;
-        transform: translate(-50%, -16px);
-        z-index: 2;
+        transform: translate(-50%, 50%);
     }
 
-    .sticker-rotate-handle:hover {
+    .sticker-rotate-handle:hover::after {
         background: #e8e4db;
     }
 
     .sticker-rotate-corner {
         position: absolute;
-        width: 28px;
-        height: 28px;
+        width: 44px;
+        height: 44px;
         background: transparent;
+        touch-action: none;
     }
-    .sticker-rotate-corner-tl { top: -20px; left: -20px; border-bottom-right-radius: 100%; }
-    .sticker-rotate-corner-tr { top: -20px; right: -20px; border-bottom-left-radius: 100%; }
-    .sticker-rotate-corner-bl { bottom: -20px; left: -20px; border-top-right-radius: 100%; }
-    .sticker-rotate-corner-br { bottom: -20px; right: -20px; border-top-left-radius: 100%; }
+    .sticker-rotate-corner-tl { top: -28px; left: -28px; border-bottom-right-radius: 100%; }
+    .sticker-rotate-corner-tr { top: -28px; right: -28px; border-bottom-left-radius: 100%; }
+    .sticker-rotate-corner-bl { bottom: -28px; left: -28px; border-top-right-radius: 100%; }
+    .sticker-rotate-corner-br { bottom: -28px; right: -28px; border-top-left-radius: 100%; }
 
-    /* --- actions (clear / delete / publish) --- */
+    /* --- coarse pointer (touch) overrides --- */
 
-    .actions {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.9rem;
-        align-items: stretch;
+    .sticker-wrapper.coarse.selected {
+        box-shadow: 0 0 0 2px #000;
     }
 
-    .action-button {
-        border: 3px solid currentColor;
-        color: #000;
-        background: #fff;
-        border-radius: 12px;
-        padding: 0.7rem 0.9rem 0.5rem;
-        font-family: "KyleHandwriting", "Comic Sans MS", "Comic Sans", ui-serif, system-ui;
-        font-size: 1.6rem;
-        text-transform: lowercase;
-        cursor: pointer;
-        transition: transform 120ms ease, background-color 120ms ease, opacity 120ms ease;
-        line-height: 1;
+    .sticker-wrapper.coarse .sticker-handle::after {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        border-width: 1.5px;
     }
 
-    .action-button:hover:enabled {
-        transform: translateY(-1px);
+    .sticker-wrapper.coarse .sticker-rotate-handle::after {
+        width: 16px;
+        height: 16px;
+        border-width: 1.5px;
     }
 
-    .action-button:active:enabled {
-        transform: translateY(1px);
+    .sticker-wrapper.coarse .sticker-rotate-line {
+        height: 20px;
     }
 
-    .action-button:disabled {
-        opacity: 0.5;
-        cursor: default;
-    }
-
-    .action-button-clear {
-        color: #2563EB;
-    }
-
-    .action-button-clear:hover:enabled {
-        background: #EFF6FF;
-    }
-
-    .action-button-clear:active:enabled {
-        background: #BFDBFE;
-    }
-
-    .action-button-delete {
-        color: #DC2626;
-    }
-
-    .action-button-delete:hover:enabled {
-        background: #FEF2F2;
-    }
-
-    .action-button-delete:active:enabled {
-        background: #FECACA;
-    }
-
-    .action-button-publish {
-        grid-column: 1 / -1;
-        justify-self: stretch;
-        color: #16A34A;
-    }
-
-    .action-button-publish:hover:enabled {
-        background: #F0FDF4;
-    }
-
-    .action-button-publish:active:enabled {
-        background: #BBF7D0;
+    .sticker-wrapper.coarse .sticker-rotate-handle {
+        transform: translate(-50%, -20px);
     }
 
     .publishing-dots::after {
@@ -1288,44 +1214,15 @@
         66.66%  { content: '...'; }
     }
 
-    .publish-error {
-        grid-column: 1 / -1;
-        text-align: center;
-        color: #DC2626;
-        font-size: 0.8rem;
-        margin: 0;
-    }
+    @media (hover: hover) {
+        .header-camera-group:hover .header-camera {
+            animation: jiggle 0.3s ease infinite;
+            filter: drop-shadow(0 5px 6px rgba(0, 0, 0, 0.22));
+        }
 
-    .header-row {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 1.5rem;
-    }
-
-    .header-camera-group {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        flex-shrink: 0;
-        cursor: pointer;
-        padding: 0.25rem 0.5rem;
-        background: none;
-        border: none;
-        outline: none;
-        -webkit-tap-highlight-color: transparent;
-    }
-
-    .header-camera {
-        width: 120px;
-        height: auto;
-        filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.15));
-        transition: filter 150ms ease, transform 150ms ease;
-    }
-
-    .header-camera-group:hover .header-camera {
-        animation: jiggle 0.3s ease infinite;
-        filter: drop-shadow(0 5px 6px rgba(0, 0, 0, 0.22));
+        .header-camera-group:hover .header-camera-hint {
+            color: #2563EB;
+        }
     }
 
     .header-camera-group:active .header-camera {
@@ -1338,18 +1235,6 @@
         filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.12));
     }
 
-    .header-camera-hint {
-        font-size: 0.7rem;
-        color: #9e9a92;
-        margin-top: 0.6rem;
-        white-space: nowrap;
-        transition: color 150ms ease;
-    }
-
-    .header-camera-group:hover .header-camera-hint {
-        color: #2563EB;
-    }
-
     @keyframes jiggle {
         0%   { transform: rotate(0deg); }
         25%  { transform: rotate(-3deg); }
@@ -1358,18 +1243,7 @@
         100% { transform: rotate(0deg); }
     }
 
-    .separator {
-        border: none;
-        border-top: 1px dashed #d5d0c4;
-        margin-top: 1.5rem;
-        margin-bottom: 1.5rem;
-    }
-
     /* --- deck --- */
-
-    .deck {
-        padding-top: 0.5rem;
-    }
 
     .deck-grid {
         display: grid;
@@ -1390,79 +1264,35 @@
         transition: transform 160ms ease, filter 160ms ease;
         position: relative;
         transform: translate(var(--dx, 0), var(--dy, 0)) rotate(var(--rot, 0deg));
-    }
-
-    .deck-card:hover {
-        transform: translate(0, 0) rotate(0deg) scale(1.08);
-        filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.4));
-        z-index: 20;
-    }
-
-    .deck-sticker {
-        position: absolute;
-        user-select: none;
-        transform-origin: center;
-    }
-
-    .deck-sticker-img {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-    }
-
-    .deck-text {
-        font-family: "KyleHandwriting", "Comic Sans MS", "Comic Sans", ui-serif, system-ui;
-        font-size: 4.4cqi;
-        line-height: 1.1;
-        overflow: hidden;
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
-        line-clamp: 3;
-        margin: 0;
+        background: none;
+        border: none;
         padding: 0;
-        word-break: break-word;
-        white-space: pre-wrap;
+        margin-top: 0;
+    }
+
+    @media (hover: hover) {
+        .deck-card:hover {
+            transform: translate(0, 0) rotate(0deg) scale(1.08);
+            filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.4));
+            z-index: 20;
+        }
+    }
+
+    @media (hover: none) and (pointer: coarse) {
+        .deck-grid {
+            margin-left: 0;
+            margin-right: 0;
+            gap: 0.75rem 0.75rem;
+        }
+
+        .deck-card {
+            transform: none;
+        }
     }
 
     .deck-text-1l { font-size: 8.8cqi; }
     .deck-text-2l { font-size: 6.6cqi; }
     .deck-text-3l { font-size: 4.4cqi; }
-
-    .load-more-row {
-        text-align: center;
-        margin-top: 1.5rem;
-    }
-
-    .load-more {
-        background: none;
-        border: none;
-        color: #2563EB;
-        font-size: 0.95rem;
-        cursor: pointer;
-        padding: 0.25rem 0.5rem;
-        transition: color 120ms ease;
-    }
-
-    .load-more:hover {
-        color: #000;
-    }
-
-    .load-more:active {
-        font-weight: 700;
-    }
-
-    .load-more:disabled {
-        cursor: default;
-        opacity: 0.6;
-    }
-
-    :global(.palette-drag-ghost) {
-        position: fixed;
-        pointer-events: none;
-        z-index: 9999;
-        filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.5));
-    }
 
     :global(body.cursor-lock) {
         cursor: var(--sticker-cursor, default) !important;

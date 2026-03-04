@@ -12,6 +12,14 @@ import {
 
 const NOTES_COLLECTION = 'notes';
 
+function makeDeckLayout() {
+    return {
+        deckRotation: Math.random() * 8 - 4,
+        deckOffsetX: Math.random() * 16 - 8,
+        deckOffsetY: 0
+    };
+}
+
 function docToNote(doc) {
     const data = doc.data();
     return {
@@ -20,10 +28,8 @@ function docToNote(doc) {
         text: data.text || '',
         textSizeLines: data.textSizeLines || 1,
         stickers: data.stickers || [],
-        deckRotation: data.deckRotation || 0,
-        deckOffsetX: data.deckOffsetX || 0,
-        deckOffsetY: data.deckOffsetY || 0,
-        backgroundUrl: data.backgroundUrl || ''
+        backgroundUrl: data.backgroundUrl || '',
+        ...makeDeckLayout()
     };
 }
 
@@ -69,9 +75,6 @@ export async function saveNote(note) {
             height: s.height,
             rotation: s.rotation
         })),
-        deckRotation: note.deckRotation,
-        deckOffsetX: note.deckOffsetX,
-        deckOffsetY: note.deckOffsetY,
         backgroundUrl: note.backgroundUrl
     });
     return docRef.id;

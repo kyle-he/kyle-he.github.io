@@ -27,12 +27,12 @@
     }
 </script>
 
-<aside class="palette">
-    <p class="palette-title">
-        <span class="palette-title-text">add stickers!</span>
+<aside class="palette flex flex-col gap-3">
+    <p class="palette-title mb-[0.4rem] flex w-full items-center justify-between gap-[0.35rem] text-[1.8rem] text-black [font-family:'KyleHandwriting','Comic_Sans_MS','Comic_Sans',ui-serif,system-ui]">
+        <span class="palette-title-text flex-1 text-left">add stickers!</span>
         <button
             type="button"
-            class="reload-button"
+            class="reload-button inline-flex items-center justify-center rounded border-0 bg-transparent p-[0.2rem] [-webkit-tap-highlight-color:transparent] enabled:cursor-pointer"
             class:spinning={reloadSpinning}
             on:click={() => {
                 spinReloadIcon();
@@ -41,32 +41,32 @@
             on:animationend={() => (reloadSpinning = false)}
             title="Reload"
         >
-            <span class="reload-tilt">
-                <span class="reload-spin">
-                    <img src="{base}/images/reload.png" alt="Reload" class="reload-icon" />
+            <span class="reload-tilt inline-block [transform-origin:50%_50%] transition-transform duration-150 ease-in-out">
+                <span class="reload-spin inline-block [transform-origin:50%_50%]">
+                    <img src="{base}/images/reload.png" alt="Reload" class="reload-icon block h-5 w-5" />
                 </span>
             </span>
         </button>
     </p>
     <div
-        class="palette-grid"
+        class="palette-grid grid grid-cols-[repeat(auto-fit,minmax(56px,1fr))] items-center gap-2"
         class:palette-out={phase === 'out'}
         class:palette-in={phase === 'in'}
         on:animationend
     >
         {#each stickers as src}
-            <button
-                type="button"
-                class="palette-button"
-                on:mousedown={(e) => handleMouseDown(e, src)}
-            >
-                <img
-                    {src}
-                    alt="sticker option"
-                    class="palette-image"
-                    class:dragging={draggingSrc === src}
-                    style={maxHeight ? `max-height: ${maxHeight}px; height: auto;` : ''}
-                    loading="lazy"
+                <button
+                    type="button"
+                    class="palette-button flex w-full items-center justify-center border-0 bg-transparent p-0 [touch-action:none] enabled:cursor-pointer"
+                    on:pointerdown={(e) => handleMouseDown(e, src)}
+                >
+                    <img
+                        {src}
+                        alt="sticker option"
+                        class="palette-image block h-auto w-full max-w-full transition-[filter,transform] duration-[130ms]"
+                        class:dragging={draggingSrc === src}
+                        style={maxHeight ? `max-height: ${maxHeight}px; height: auto;` : ''}
+                        loading="lazy"
                     draggable="false"
                 />
             </button>
@@ -75,52 +75,6 @@
 </aside>
 
 <style>
-    .palette {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-    }
-
-    .palette-title {
-        margin: 0 0 0.4rem 0;
-        font-family: "KyleHandwriting", "Comic Sans MS", "Comic Sans", ui-serif, system-ui;
-        font-size: 1.8rem;
-        color: #000;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.35rem;
-        width: 100%;
-    }
-
-    .palette-title-text {
-        flex: 1;
-        text-align: left;
-    }
-
-    .reload-button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0.2rem;
-        border: none;
-        background: transparent;
-        cursor: pointer;
-        border-radius: 4px;
-        -webkit-tap-highlight-color: transparent;
-    }
-
-    .reload-tilt {
-        display: inline-block;
-        transform-origin: 50% 50%;
-        transition: transform 160ms ease;
-    }
-
-    .reload-spin {
-        display: inline-block;
-        transform-origin: 50% 50%;
-    }
-
     .reload-button:hover .reload-tilt {
         transform: rotate(-18deg);
     }
@@ -138,12 +92,6 @@
         to { transform: rotate(360deg); }
     }
 
-    .reload-icon {
-        width: 1.25rem;
-        height: 1.25rem;
-        display: block;
-    }
-
     @media (prefers-reduced-motion: reduce) {
         .reload-tilt {
             transition: none;
@@ -153,39 +101,12 @@
         }
     }
 
-    .palette-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
-        gap: 0.5rem;
-        align-items: center;
-    }
-
     .palette-grid.palette-out {
         animation: paletteFadeDown 0.26s ease both;
     }
 
     .palette-grid.palette-in {
         animation: paletteFadeUp 0.26s ease both;
-    }
-
-    .palette-button {
-        border-radius: 0;
-        border: none;
-        padding: 0;
-        background: transparent;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-    }
-
-    .palette-image {
-        width: 100%;
-        height: auto;
-        max-width: 100%;
-        display: block;
-        transition: filter 130ms ease, transform 130ms ease;
     }
 
     .palette-image.dragging {
