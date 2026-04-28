@@ -70,6 +70,7 @@ async function init() {
     state.confettiCtx = state.confettiCanvas.getContext('2d', { alpha: true, desynchronized: true });
     state.detectionCanvas = document.getElementById('detectionCanvas');
     state.detectionCtx = state.detectionCanvas.getContext('2d', { alpha: true });
+    setupInfoModal();
     
     setupCanvas();
     window.addEventListener('resize', setupCanvas);
@@ -454,6 +455,37 @@ function hideBottomLoading() {
     if (loading?.parentElement) {
         loading.parentElement.style.display = 'none';
     }
+}
+
+function setupInfoModal() {
+    const infoButton = document.getElementById('infoButton');
+    const infoModal = document.getElementById('infoModal');
+    const infoModalClose = document.getElementById('infoModalClose');
+    if (!infoButton || !infoModal || !infoModalClose) return;
+
+    const openModal = () => {
+        infoModal.classList.add('is-open');
+        infoModal.setAttribute('aria-hidden', 'false');
+    };
+
+    const closeModal = () => {
+        infoModal.classList.remove('is-open');
+        infoModal.setAttribute('aria-hidden', 'true');
+    };
+
+    infoButton.addEventListener('click', openModal);
+    infoModalClose.addEventListener('click', closeModal);
+    infoModal.addEventListener('click', (event) => {
+        if (event.target === infoModal) {
+            closeModal();
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && infoModal.classList.contains('is-open')) {
+            closeModal();
+        }
+    });
 }
 
 // ==========================================
