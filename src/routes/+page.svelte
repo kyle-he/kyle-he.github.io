@@ -75,7 +75,7 @@
   <section class="mt-8">
     <h2 class="font-serif text-2xl font-semibold text-left">Contact</h2>
     <p class="font-serif text-base text-left mt-4">
-      Feel free to email me anything at: kylehe04@gmail.com
+      email me: kylehe04@gmail.com
     </p>
   </section>
 </main>

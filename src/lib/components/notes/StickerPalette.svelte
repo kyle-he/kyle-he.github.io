@@ -1,6 +1,8 @@
 <script>
     import { createEventDispatcher } from "svelte";
+    import { onDestroy } from "svelte";
     import { base } from "$app/paths";
+    import { createWebHaptics } from "web-haptics/svelte";
 
     export let stickers = [];
     export let draggingSrc = null;
@@ -9,6 +11,7 @@
     export let phase = null;
 
     const dispatch = createEventDispatcher();
+    const { trigger: triggerHaptic, destroy: destroyHaptics, isSupported: isHapticsSupported } = createWebHaptics();
 
     let reloadSpinning = false;
 
@@ -17,6 +20,9 @@
         const img = event.currentTarget.querySelector("img");
         const rect = img.getBoundingClientRect();
         dispatch("dragstart", { src, clientX: event.clientX, clientY: event.clientY, imgWidth: rect.width, imgHeight: rect.height, offsetX: event.clientX - rect.left, offsetY: event.clientY - rect.top });
+        if (isHapticsSupported && typeof window !== "undefined") {
+            triggerHaptic("selection").catch(() => {});
+        }
     }
 
     function spinReloadIcon() {
@@ -25,6 +31,10 @@
             reloadSpinning = true;
         });
     }
+
+    onDestroy(() => {
+        destroyHaptics();
+    });
 </script>
 
 <aside class="palette flex flex-col gap-3">
@@ -37,6 +47,9 @@
             on:click={() => {
                 spinReloadIcon();
                 dispatch("reload");
+                if (isHapticsSupported && typeof window !== "undefined") {
+                    triggerHaptic("light").catch(() => {});
+                }
             }}
             on:animationend={() => (reloadSpinning = false)}
             title="Reload"

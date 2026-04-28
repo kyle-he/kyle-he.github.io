@@ -6,6 +6,7 @@
     import { afterNavigate } from "$app/navigation";
     import { fetchNotes, saveNote } from "$lib/services/notes.js";
     import { base } from "$app/paths";
+    import { createWebHaptics } from "web-haptics/svelte";
 
     /**
      * @typedef {Object} StickerInstance
@@ -175,6 +176,10 @@
     let resizeStartClientY = 0;
     let resizeFrameRect;
     let resizeStartRotation = 0;
+    let resizePrevWidthPx = 0;
+    let resizePrevHeightPx = 0;
+    let resizeAccumulatedDeltaPx = 0;
+    let resizeHapticStep = 0;
 
     let isRotating = false;
     let rotateStickerId = null;
@@ -191,7 +196,14 @@
     $: stickerSpawnHeight = canvasHeight * 0.24;
 
     const HANDLE_BASE_ANGLE = { t: 90, b: 90, l: 0, r: 0, tl: 45, br: 45, tr: 135, bl: 135 };
+    const RESIZE_HAPTIC_TICK_PX = 18;
     const cursorCache = new Map();
+    const { trigger: triggerHaptic, destroy: destroyHaptics, isSupported: isHapticsSupported } = createWebHaptics();
+
+    function fireHaptic(input = "selection", options = undefined) {
+        if (!isHapticsSupported || typeof window === "undefined") return;
+        triggerHaptic(input, options).catch(() => {});
+    }
 
     function makeSvgCursor(innerSvg, hotX = 16, hotY = 16) {
         const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32">${innerSvg}</svg>`;
@@ -343,6 +355,7 @@
         dragStartStickerX = currentNote.stickers[index].x;
         dragStartStickerY = currentNote.stickers[index].y;
         if (!isCoarsePointer) setBodyCursor('grabbing');
+        fireHaptic("selection");
     }
 
     function handleFramePointerDown(event) {
@@ -440,6 +453,22 @@
                 width: (npw / fw) * 100,
                 height: (nph / fh) * 100
             });
+            if (isCoarsePointer) {
+                const currentWidthPx = Math.abs(npw);
+                const currentHeightPx = Math.abs(nph);
+                const deltaPx =
+                    Math.abs(currentWidthPx - resizePrevWidthPx) +
+                    Math.abs(currentHeightPx - resizePrevHeightPx);
+                resizeAccumulatedDeltaPx += deltaPx;
+                resizePrevWidthPx = currentWidthPx;
+                resizePrevHeightPx = currentHeightPx;
+
+                const nextStep = Math.floor(resizeAccumulatedDeltaPx / RESIZE_HAPTIC_TICK_PX);
+                if (nextStep > resizeHapticStep) {
+                    fireHaptic("selection");
+                    resizeHapticStep = nextStep;
+                }
+            }
         }
     }
 
@@ -453,6 +482,7 @@
 
             if (!moved) {
                 addSticker(paletteDrag.src, paletteDrag.imgWidth, paletteDrag.imgHeight);
+                fireHaptic("light");
             } else {
                 const rect = frameEl?.getBoundingClientRect();
                 if (
@@ -486,6 +516,7 @@
                         stickers: [...currentNote.stickers, newSticker]
                     };
                     selectedStickerId = newSticker.id;
+                    fireHaptic("light");
                 }
             }
 
@@ -520,7 +551,12 @@
         resizeHandle = handle;
         isResizing = true;
         resizeStickerId = id;
+        resizePrevWidthPx = Math.abs((sticker.width / 100) * resizeFrameRect.width);
+        resizePrevHeightPx = Math.abs((sticker.height / 100) * resizeFrameRect.height);
+        resizeAccumulatedDeltaPx = 0;
+        resizeHapticStep = 0;
         if (!isCoarsePointer) setBodyCursor(getResizeCursor(handle, sticker.rotation || 0));
+        fireHaptic("selection");
     }
 
     function handleRotatePointerDown(event, id, cornerBase = 0) {
@@ -547,6 +583,7 @@
         isRotating = true;
         rotateStickerId = id;
         if (!isCoarsePointer) setBodyCursor(getRotateCursor((sticker.rotation || 0) + cornerBase));
+        fireHaptic("selection");
     }
 
     function resetStickerInteractionState() {
@@ -576,6 +613,7 @@
     function deleteSelectedSticker() {
         if (selectedStickerId == null) return;
         deleteSticker(selectedStickerId);
+        fireHaptic("warning");
     }
 
     function clearStickers() {
@@ -584,6 +622,7 @@
         currentNote = { ...currentNote, stickers: [] };
         selectedStickerId = null;
         hoveredStickerId = null;
+        fireHaptic("warning");
     }
 
     function handleKeydown(event) {
@@ -660,12 +699,14 @@
         hoveredStickerId = null;
         showBuilder = false;
         requestAnimationFrame(() => { showBuilder = true; });
+        fireHaptic("medium");
     }
 
     $: canPublish = currentNote.text.trim().length > 0 || currentNote.stickers.length > 0;
 
     async function loadMore() {
         if (loadingMore || !hasMore) return;
+        fireHaptic("selection");
         loadingMore = true;
         try {
             const result = await fetchNotes(PAGE_SIZE, lastDoc);
@@ -674,6 +715,7 @@
             hasMore = result.hasMore;
         } catch (err) {
             console.error('Failed to load more notes:', err);
+            fireHaptic("error");
         } finally {
             loadingMore = false;
         }
@@ -688,6 +730,7 @@
         resetStickerInteractionState();
         publishError = false;
         isPublishing = true;
+        fireHaptic("medium");
 
         const note = {
             ...currentNote,
@@ -704,9 +747,11 @@
             note.id = docId;
             pendingPublish = note;
             publishPhase = 'out';
+            fireHaptic("success");
         } catch (err) {
             console.error('Failed to publish note:', err);
             publishError = true;
+            fireHaptic("error");
         } finally {
             isPublishing = false;
         }
@@ -738,6 +783,7 @@
         if (palettePhase) return;
         pendingPalette = randomPalette();
         palettePhase = 'out';
+        fireHaptic("light");
     }
 
     /** @param {AnimationEvent} e */
@@ -794,6 +840,7 @@
         window.removeEventListener("pointerup", handleWindowPointerUp);
         window.removeEventListener("keydown", handleKeydown);
         resizeObserver?.disconnect();
+        destroyHaptics();
     });
 </script>
 
@@ -959,7 +1006,7 @@
     </div>
     {/if}
 
-    <section class="deck pt-2">
+    <section class="deck">
         {#if loadingNotes}
             <p class="font-serif text-sm text-neutral-400">loading notes...</p>
         {:else if publishedNotes.length === 0}
@@ -1275,6 +1322,18 @@
             transform: translate(0, 0) rotate(0deg) scale(1.08);
             filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.4));
             z-index: 20;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .deck-grid {
+            margin-left: 0;
+            margin-right: 0;
+            gap: 0.75rem 0.75rem;
+        }
+
+        .deck-card {
+            transform: none;
         }
     }
 
