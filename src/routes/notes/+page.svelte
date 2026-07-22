@@ -47,6 +47,7 @@
         `${base}/images/stickers/sunglasses.png`,
         `${base}/images/stickers/nailong1.png`,
         `${base}/images/stickers/nailong2.png`,
+        `${base}/images/stickers/top_hat.png`,
     ];
 
     function shuffleArray(arr) {
