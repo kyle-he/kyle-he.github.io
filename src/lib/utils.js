@@ -8,6 +8,8 @@ export async function getAllPosts() {
 
         if (file && typeof file === 'object' && 'metadata' in file && slug) {
             if (file.metadata.publish === false) continue;
+            // Unlisted posts stay accessible via direct URL but are hidden from the list.
+            if (file.metadata.unlisted === true) continue;
             
             const post = {
                 metadata: file.metadata,

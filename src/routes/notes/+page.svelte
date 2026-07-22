@@ -44,7 +44,9 @@
         `${base}/images/stickers/mushroom.png`,
         `${base}/images/stickers/musical_note.png`,
         `${base}/images/stickers/snowman.png`,
-        `${base}/images/stickers/sunglasses.png`
+        `${base}/images/stickers/sunglasses.png`,
+        `${base}/images/stickers/nailong1.png`,
+        `${base}/images/stickers/nailong2.png`,
     ];
 
     function shuffleArray(arr) {
@@ -859,7 +861,7 @@
                 <p class="font-serif text-base text-left mt-2">Build your own polaroid card, leave a note, and publish it to my website :)</p>
             </div>
             <button
-                class="header-camera-group flex shrink-0 cursor-pointer flex-col items-center border-0 bg-transparent px-2 py-1 outline-none [-webkit-tap-highlight-color:transparent]"
+                class="header-camera-group flex min-w-[12rem] shrink-0 cursor-pointer flex-col items-center border-0 bg-transparent px-2 py-1 outline-none [-webkit-tap-highlight-color:transparent]"
                 class:active={showBuilder}
                 on:click={startNewSession}
                 aria-label="Start a new polaroid"
@@ -870,7 +872,11 @@
                     class="header-camera h-auto w-[120px] [filter:drop-shadow(0_4px_4px_rgba(0,0,0,0.15))] transition-[filter,transform] duration-150 ease-in-out"
                 />
                 <span class="header-camera-hint mt-[0.6rem] whitespace-nowrap font-serif text-[0.7rem] text-[#9e9a92] transition-colors duration-150">
-                    (hint: click the camera)
+                    {#if showBuilder}
+                        (click again for a new pic)
+                    {:else}
+                        (hint: click the camera)
+                    {/if}
                 </span>
             </button>
         </div>

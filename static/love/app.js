@@ -9,8 +9,6 @@ const state = {
     confettiCtx: null,
     detectionCanvas: null,
     detectionCtx: null,
-    audioCtx: null,
-    audioEnabled: false,
     
     personDetected: false,
     lastConfettiTime: 0,
@@ -72,6 +70,7 @@ async function init() {
     state.confettiCtx = state.confettiCanvas.getContext('2d', { alpha: true, desynchronized: true });
     state.detectionCanvas = document.getElementById('detectionCanvas');
     state.detectionCtx = state.detectionCanvas.getContext('2d', { alpha: true });
+    setupInfoModal();
     
     setupCanvas();
     window.addEventListener('resize', setupCanvas);
@@ -238,7 +237,6 @@ function handlePersonLeft() {
 function startCelebration() {
     // Start with first pop-up (which will trigger confetti)
     rotatePraiseMessage();
-    playCelebrationSound();
 }
 
 function stopCelebration() {
@@ -407,72 +405,10 @@ function rotatePraiseMessage() {
     
     // Trigger confetti burst
     addConfettiBurst();
-    playPopSound();
     
     setTimeout(() => {
         messageElement.remove();
     }, 2000);
-}
-
-// ==========================================
-// Sound Effects
-// ==========================================
-
-function enableAudio() {
-    if (!state.audioCtx) {
-        state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    state.audioEnabled = true;
-    state.audioCtx.resume();
-}
-
-function playTone(frequency, startTime, duration, type, volume) {
-    if (!state.audioEnabled || !state.audioCtx) return;
-
-    const oscillator = state.audioCtx.createOscillator();
-    const gain = state.audioCtx.createGain();
-
-    oscillator.type = type;
-    oscillator.frequency.setValueAtTime(frequency, startTime);
-    gain.gain.setValueAtTime(0.001, startTime);
-    gain.gain.exponentialRampToValueAtTime(volume, startTime + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-
-    oscillator.connect(gain);
-    gain.connect(state.audioCtx.destination);
-    oscillator.start(startTime);
-    oscillator.stop(startTime + duration);
-}
-
-function playPopSound() {
-    if (!state.audioEnabled || !state.audioCtx) return;
-
-    const now = state.audioCtx.currentTime;
-    const oscillator = state.audioCtx.createOscillator();
-    const gain = state.audioCtx.createGain();
-
-    oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(420, now);
-    oscillator.frequency.exponentialRampToValueAtTime(900, now + 0.045);
-    oscillator.frequency.exponentialRampToValueAtTime(520, now + 0.11);
-
-    gain.gain.setValueAtTime(0.001, now);
-    gain.gain.exponentialRampToValueAtTime(0.08, now + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
-
-    oscillator.connect(gain);
-    gain.connect(state.audioCtx.destination);
-    oscillator.start(now);
-    oscillator.stop(now + 0.14);
-}
-
-function playCelebrationSound() {
-    if (!state.audioEnabled || !state.audioCtx) return;
-
-    const now = state.audioCtx.currentTime;
-    playTone(523.25, now, 0.12, 'sine', 0.05);
-    playTone(659.25, now + 0.08, 0.12, 'sine', 0.05);
-    playTone(783.99, now + 0.16, 0.18, 'sine', 0.06);
 }
 
 // ==========================================
@@ -521,13 +457,42 @@ function hideBottomLoading() {
     }
 }
 
+function setupInfoModal() {
+    const infoButton = document.getElementById('infoButton');
+    const infoModal = document.getElementById('infoModal');
+    const infoModalClose = document.getElementById('infoModalClose');
+    if (!infoButton || !infoModal || !infoModalClose) return;
+
+    const openModal = () => {
+        infoModal.classList.add('is-open');
+        infoModal.setAttribute('aria-hidden', 'false');
+    };
+
+    const closeModal = () => {
+        infoModal.classList.remove('is-open');
+        infoModal.setAttribute('aria-hidden', 'true');
+    };
+
+    infoButton.addEventListener('click', openModal);
+    infoModalClose.addEventListener('click', closeModal);
+    infoModal.addEventListener('click', (event) => {
+        if (event.target === infoModal) {
+            closeModal();
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && infoModal.classList.contains('is-open')) {
+            closeModal();
+        }
+    });
+}
+
 // ==========================================
 // Event Listeners
 // ==========================================
 
 window.addEventListener('load', init);
-
-document.addEventListener('pointerdown', enableAudio, { once: true });
 
 // Cleanup
 window.addEventListener('beforeunload', () => {

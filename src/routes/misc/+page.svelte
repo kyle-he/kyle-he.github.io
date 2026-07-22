@@ -36,6 +36,10 @@
         <h2 class="font-serif text-2xl font-semibold text-left">fun</h2>
 
         <p class="font-serif text-base text-left mt-4">
+            (some side projects that i'm proud of)
+        </p>
+
+        <p class="font-serif text-base text-left mt-4">
             <a
                 href="https://coachella.kylehe.com"
                 target="_blank"
@@ -77,6 +81,9 @@
             gaming deving
         </h2>
         <p class="font-serif text-base text-left mt-4">
+            (these are some of the games that i made back in high school)
+        </p>
+        <p class="font-serif text-base text-left mt-4">
             <a
                 href="https://keeelay.itch.io/the-lost-soul"
                 target="_blank"
@@ -109,6 +116,11 @@
                 88x31
             </a>
         </h2>
+
+        <p class="font-serif text-base text-left mt-4">
+            (these are my friend's websites!)
+        </p>
+
         <div class="mt-4 flex flex-wrap gap-2">
             {#each friendIcons as icon}
                 <a href={icon.url} target="_blank" rel="noopener noreferrer">

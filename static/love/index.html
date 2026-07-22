@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unconditional Love</title>
+    <title>Unreasonable Love</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9D%A4%EF%B8%8F%3C/text%3E%3C/svg%3E">
     
     <!-- Preconnect -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
@@ -68,6 +69,110 @@
             padding: 3rem 2rem;
             position: relative;
             z-index: 2;
+        }
+
+        .info-button {
+            position: fixed;
+            top: 1.25rem;
+            right: 1.25rem;
+            width: 2.25rem;
+            height: 2.25rem;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.82);
+            backdrop-filter: blur(16px) saturate(160%);
+            color: var(--color-muted);
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1003;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .info-button:hover {
+            color: var(--color);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .info-button:focus-visible {
+            outline: 2px solid var(--focus-color);
+            outline-offset: 2px;
+        }
+
+        .info-modal {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            background: rgba(10, 10, 10, 0.35);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 1004;
+        }
+
+        .info-modal.is-open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .info-modal-card {
+            width: min(32rem, 100%);
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 1.25rem 1.25rem 1rem;
+            box-shadow: 0 18px 50px rgba(0, 0, 0, 0.16);
+        }
+
+        .info-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+
+        .info-modal-title {
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+        }
+
+        .info-modal-close {
+            border: 1px solid var(--border);
+            background: #fff;
+            border-radius: 999px;
+            width: 1.75rem;
+            height: 1.75rem;
+            color: var(--color-muted);
+            cursor: pointer;
+            font-size: 1rem;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .info-modal-close:hover {
+            color: var(--color);
+        }
+
+        .info-modal-body {
+            color: var(--color-muted);
+            font-size: 0.95rem;
+            line-height: 1.55;
+        }
+
+        .info-modal-body a {
+            color: var(--blue);
+            text-underline-offset: 2px;
         }
         
         .header {
@@ -330,12 +435,28 @@
     
     <!-- Confetti Canvas -->
     <canvas id="confettiCanvas"></canvas>
+
+    <button class="info-button" id="infoButton" aria-label="About this project" title="About this project">i</button>
+
+    <div class="info-modal" id="infoModal" aria-hidden="true">
+        <div class="info-modal-card" role="dialog" aria-modal="true" aria-labelledby="infoModalTitle">
+            <div class="info-modal-header">
+                <h2 class="info-modal-title" id="infoModalTitle">About</h2>
+                <button class="info-modal-close" id="infoModalClose" aria-label="Close info modal">&times;</button>
+            </div>
+            <p class="info-modal-body">
+                Made with ❤️ by <a href="https://kylehe.com" target="_blank" rel="noopener noreferrer">Kyle He</a> for AMST204. <br> <br>
+                This is an art project based on Kiese Laymon's
+                <a href="https://colorlines.com/articles/kiese-laymon-trayvon-black-manhood-and-love" target="_blank" rel="noopener noreferrer">Unreasonable Love</a>.
+            </p>
+        </div>
+    </div>
     
     <!-- Main Container -->
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>You are loved</h1>
+            <h1>You are loved :D</h1>
         </div>
         
         <!-- Video -->
