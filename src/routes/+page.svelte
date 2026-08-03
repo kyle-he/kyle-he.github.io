@@ -24,7 +24,7 @@
 <main>
   <p class="font-serif text-base text-left mt-12">
     Hello! I'm <span class="font-mono text-sm" >{ageInYears}</span> years old and I live in New York City, 
-    where I am a software engineer at Meta. Previously, I have lived in Los Angeles (for university - fight on!), 
+    where I build software at Meta. Previously, I have lived in Los Angeles (for university - fight on!), 
     San Jose (hometown), and Shanghai (until I was ~5).
   </p>
 
