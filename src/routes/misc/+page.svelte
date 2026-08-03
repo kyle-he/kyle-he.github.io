@@ -41,6 +41,18 @@
 
         <p class="font-serif text-base text-left mt-4">
             <a
+                href="https://planyourcrib.kylehe.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="link-highlight"
+            >
+                planyourcrib.kylehe.com
+            </a>
+            - super intuitive floorplan builder
+        </p>
+
+        <p class="font-serif text-base text-left mt-4">
+            <a
                 href="https://coachella.kylehe.com"
                 target="_blank"
                 rel="noopener noreferrer"

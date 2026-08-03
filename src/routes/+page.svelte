@@ -23,10 +23,9 @@
 
 <main>
   <p class="font-serif text-base text-left mt-12">
-    Hello! I'm <span class="font-mono text-sm" >{ageInYears}</span> years old and I live in
-    Los Angeles, where I am studying Computer Science at USC. Previously, I have
-    lived in San Jose (hometown), New York City (two summers), and Shanghai (until
-    I was ~5).
+    Hello! I'm <span class="font-mono text-sm" >{ageInYears}</span> years old and I live in New York City, 
+    where I am a software engineer at Meta. Previously, I have lived in Los Angeles (for university - fight on!), 
+    San Jose (hometown), and Shanghai (until I was ~5).
   </p>
 
   <section class="mt-8">
